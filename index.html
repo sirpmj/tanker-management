@@ -310,13 +310,7 @@ margin-left:4px;
 
 
 
-.auth-container {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #4e73df, #1cc88a);
-}
+
 
 .auth-box {
   background: white;
@@ -402,36 +396,12 @@ margin-left:4px;
 }
 
 
-/* FORCE FULLSCREEN CENTER LOGIN */
-#loginSection.auth-container {
-  position: fixed !important;
-  inset: 0 !important;     /* top:0 left:0 right:0 bottom:0 */
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: linear-gradient(135deg, #4e73df, #1cc88a) !important;
-}
 
-/* Remove any body spacing */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100% !important;
-}
-
-/* Ensure main app hidden */
-#mainApp {
-  display: none;
-}
 </style>
 </head>
 
 
-<div id="loginSection" class="auth-container">
+<div id="loginSection">
 
 
 
