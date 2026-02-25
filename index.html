@@ -623,6 +623,13 @@ margin-left:4px;
 </div>
 
 <!-- Original app script (localStorage) -->
+
+// Data (initial local copy)
+let orders = [];
+let tankers = [];
+let parties = [];
+let currentTankerFilter = 'active';
+
 <script>
 
 
@@ -630,11 +637,11 @@ document.getElementById("loginSection").style.display = "block";
 document.querySelector(".container").style.display = "none";
 
 
-// Data (initial local copy)
-let orders = JSON.parse(localStorage.getItem('orders')||'[]');
-let tankers = JSON.parse(localStorage.getItem('tankers')||'[]');
-let parties = JSON.parse(localStorage.getItem('parties')||'[]');
-let currentTankerFilter = 'active';
+function loadData(){
+  orders = JSON.parse(localStorage.getItem('orders') || '[]');
+  tankers = JSON.parse(localStorage.getItem('tankers') || '[]');
+  parties = JSON.parse(localStorage.getItem('parties') || '[]');
+}
 
 /* ---------- PARTY ---------- */
 function refreshPartyDropdown(){
@@ -1656,12 +1663,20 @@ function setSyncStatus(text, color){
 
 </script>
 
+window.onload = function(){
+  loadData();
+  refreshPartyDropdown();
+  showOrders();
+  showTankers();
+  updateDashboard();
+}
+
+
 <!-- 📱 Mobile Floating Buttons -->
 
 <div class="mobile-fab">
   <button onclick="toggleOrderForm()">➕ Order</button>
   <button onclick="toggleTankerForm()">🚚 Tanker</button>
-
 
 </div>
 
