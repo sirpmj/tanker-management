@@ -1,0 +1,1660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🚚 Tanker Management</title>
+<style>
+:root { --primary:#4a90e2; --primary-light:#2DD4BF;--primary-dark:#3578c6; --bg:#f0f4f8; --card:#fff; --text:#333; --muted:#555; --border:#ddd; }
+body { font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding:10px; color:var(--text); display:flex; justify-content:center; }
+
+
+
+
+
+.container{width:100%;max-width:1200px;}
+
+
+
+label{font-size:12px;font-weight:600;margin-bottom:3px;color:var(--muted);display:block;}
+input,select,button,textarea{ padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+
+input,select,textarea{width:100%;}
+button{ background:var(--primary);color:#fff;font-weight:600;cursor:pointer;transition:0.2s all;border:none;}
+button:hover{background:var(--primary-dark);}
+.flex{display:flex;gap:8px;flex-wrap:wrap;}
+.flex>div{flex:1;min-width:120px;}
+
+h1{text-align:center;font-size:24px;margin-bottom:6px;color:var(--primary);}
+.card{ background:var(--card);padding:10px;border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08);margin-bottom:4px;}
+
+h3 {
+  margin:6px 0 6px 0;
+  font-size:18px;
+  color:var(--primary);
+  font-weight:600;
+  border-left:6px solid var(--primary-light);
+  padding-left:4px;
+}
+
+.card h3 {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 10;
+}
+
+
+
+
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th,td{border:1px solid var(--border);padding:4px;text-align:center;vertical-align:middle}
+thead th{background:var(--primary);color:#fff;position:sticky;top:0;z-index:10;height:32px}
+td input, td select, td textarea{width:100%;padding:4px;font-size:12px;}
+td[contenteditable="true"]{background:#fdf7e6;cursor:text;}
+tbody tr:nth-child(even){background:#f9fbfd;}
+tbody tr:hover{background:#f1f8ff;}
+.status-badge{padding:3px 6px;border-radius:6px;color:#fff;font-size:11px;font-weight:600;display:inline-block}
+.status-Empty{background:#aaa;}
+.status-ToFill{background:#f9d342;color:#000;}
+.status-Filled{background:#4caf50;}
+.status-Dispatched{background:#2196f3;}
+.status-Complete{background:#8bc34a;}
+.action-btn{padding:4px 6px;font-size:12px;margin:1px;border-radius:6px}
+.dashboard{ display:flex;gap:10px;overflow-x:auto;white-space:nowrap; margin-bottom:6px;justify-content:center; position:sticky;top:0;z-index:1000; background:#e3f2fd; padding:10px; border-radius:12px; }
+.dashboard .card{ flex:0 0 auto;min-width:105px;text-align:center;padding:8px;border-radius:10px; cursor:pointer;transition:0.12s all; }
+.dashboard .card:hover{background:var(--primary-dark);color:#fff;transform:translateY(-2px);}
+.top-bar{display:flex;justify-content:center;align-items:center;margin-bottom:2px;gap:4px;}
+.tanker-locked { background:#eee; color:#666; font-style:italic; padding:4px;border-radius:6px}
+ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.sync-status { font-size:12px; padding:4px 8px; border-radius:6px; background:#fff; margin-left:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+@media (max-width:600px){
+  .flex{flex-direction:column;}
+  th,td{font-size:12px;}
+
+  /* Responsive dashboard: 2 columns on small screens, no horizontal scroll */
+  .dashboard {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    white-space: normal !important;
+    overflow-x: visible !important;
+    padding: 8px;
+  }
+  .dashboard .card {
+    min-width: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+}
+
+/* 📱 Mobile: Compact Same Layout for Add Order & Add Tanker */
+@media (max-width:600px){
+
+  #addOrderCard .flex,
+  #tankerCard .flex {
+    flex-direction:column;
+    gap:4px;                /* ⬅ reduce vertical gap */
+  }
+
+  #addOrderCard .flex > div,
+  #tankerCard .flex > div {
+    display:flex;
+    align-items:center;
+    gap:6px;                /* ⬅ reduce label-input gap */
+    width:100%;
+    margin-bottom:2px;      /* ⬅ reduce line space */
+  }
+
+  #addOrderCard label,
+  #tankerCard label {
+    width:100px;            /* slightly smaller */
+    font-size:12px;         /* compact */
+    margin:0;
+  }
+
+  #addOrderCard input,
+  #addOrderCard select,
+  #tankerCard input,
+  #tankerCard select {
+    flex:1;
+    padding:4px 6px;        /* ⬅ reduce input height */
+    font-size:12px;
+  }
+
+}
+
+/* 📱 Mobile: Button Right Side */
+@media (max-width:600px){
+
+  #addOrderCard .flex > div:last-child,
+  #tankerCard .flex > div:last-child {
+    justify-content:flex-end;   /* button right side */
+  }
+
+  #addOrderCard button,
+  #tankerCard button {
+    width:auto;                 /* full width remove */
+    padding:5px 12px;
+  }
+
+}
+
+
+/* 📱 Floating Action Buttons */
+.mobile-fab{
+  display:none;
+}
+
+@media (max-width:600px){
+
+  .mobile-fab{
+    display:flex;
+    position:fixed;
+    bottom:15px;
+    right:15px;
+    flex-direction:column;
+    gap:10px;
+    z-index:2000;
+  }
+
+  .mobile-fab button{
+    border-radius:50px;
+    padding:10px 16px;
+    font-size:13px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    background:var(--primary);
+  }
+
+}
+
+/* 📱 Mobile Floating Forms */
+@media (max-width:600px){
+
+  #addOrderCard,
+  #tankerCard{
+    position:fixed;
+    bottom:80px;
+    right:10px;
+    width:95%;
+    max-height:75vh;
+    overflow:auto;
+    z-index:3000;
+    display:none;   /* default hidden */
+    cursor:auto;
+  }
+
+  #addOrderCard.active,
+  #tankerCard.active{
+    display:block;
+  }
+
+}
+
+
+/* --- Header filter styles (paste into existing <style>) --- */
+th { position: relative; }
+.filter-input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+
+
+
+
+
+/* Spacing between fields inside Add Order form */
+#addOrderCard .flex > div {
+  margin-bottom:6px;   /* vertical gap */
+margin-left:4px;
+  padding-right:12px;   /* horizontal space between columns */
+}
+
+/* For mobile view - remove extra gap*/
+@media (max-width:600px){
+  #addOrderCard .flex > div,
+  #tankerCard .flex > div {
+    padding-right:0;
+  }
+}
+
+/* ---------------- COMPACT LAYOUT FOR BOTH FORMS ---------------- */
+
+#addOrderCard .flex > div,
+#tankerCard .flex > div {
+  margin-bottom:6px;   /* vertical space */
+margin-left:4px;
+  padding-right:8px;   /* space between columns */
+}
+
+/* Mobile auto-fix */
+@media (max-width:600px){
+  #addOrderCard .flex > div,
+  #tankerCard .flex > div {
+    padding-right:0;
+  }
+}
+
+/* ---- Inputs Compact ---- */
+
+
+
+
+/* ---- Bigger labels for BOTH forms ---- */
+#addOrderCard label,
+#tankerCard label {
+  font-size:14px !important;
+margin-left:4px;
+  font-weight:600 !important;
+   color:var(--primary); !important; /* Replace this with your preferred color */
+}
+
+#orderTable th:nth-child(2),
+#orderTable td:nth-child(2) {
+  width: 120px;
+}
+
+#orderTable th:nth-child(3),
+#orderTable td:nth-child(3) {
+  width: 140px;
+}
+
+#orderTable th:nth-child(7),
+#orderTable td:nth-child(7) {
+  width: 150px;
+  max-width: 150px;
+}
+
+#orderTable td:nth-child(7) select {
+  width: 100%;
+  padding: 3px;
+  font-size: 12px;
+}
+.sort-btn {
+  font-size: 14px;
+  padding: 2px 5px;
+  margin-left: 2px;
+  cursor: pointer;
+}
+
+#orderTable th {
+  pointer-events: none;   /* header non-clickable */
+}
+
+#orderTable th .sort-btn {
+  pointer-events: auto;   /* sirf button clickable */
+}
+
+
+.type-badge{
+  padding:3px 6px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:600;
+}
+
+.type-SS{
+  background:#dbeafe;
+  color:#1e40af;
+}
+
+.type-MS{
+  background:#e5e7eb;
+  color:#111827;
+}
+
+
+
+.auth-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #4e73df, #1cc88a);
+}
+
+.auth-box {
+  background: white;
+  padding: 30px;
+  width: 320px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.auth-box h2 {
+  margin-bottom: 20px;
+}
+
+.auth-box input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.auth-box button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: #4e73df;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.auth-box button:hover {
+  background: #2e59d9;
+}
+
+.link {
+  color: #4e73df;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#logoutBtn {
+  padding: 6px 12px;
+  background: #e74a3b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#logoutBtn:hover {
+  background: #c0392b;
+}
+
+#welcomeUser {
+  font-weight: bold;
+}
+
+
+
+
+.app-title {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #4e73df, #1cc88a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+</style>
+</head>
+
+
+<div id="loginSection" class="auth-container">
+
+
+
+  <!-- ================= SIGNUP ================= -->
+  <div id="signupBox" class="auth-box">
+
+<h1 class="app-title">🚚 Tanker Management</h1>
+    <h2>📝 Signup</h2>
+
+    <input type="text" id="signupName" placeholder="Full Name">
+<input type="email" id="signupEmail" placeholder="Email">
+<input type="password" id="signupPassword" placeholder="Password">
+
+    <button onclick="signup()">Signup</button>
+
+    <p>
+      Already have an account?
+      <span class="link" onclick="showLogin()">Login</span>
+    </p>
+
+  </div>
+
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginBox" class="auth-box" style="display:none;">
+<h1 class="app-title">🚚 Tanker Management</h1>
+
+    <h2>🔐 Login</h2>
+
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+
+    <p>
+      Signup first if you are a new user
+      <span class="link" onclick="showSignup()">Signup</span>
+    </p>
+
+  </div>
+
+</div>
+
+
+<body>
+
+
+<div class="container">
+
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <button onclick="downloadBackup()">⬇ Backup</button>
+      <button onclick="document.getElementById('restoreFile').click()">⬆ Restore</button>
+      <input type="file" id="restoreFile" style="display:none" onchange="restoreBackup(event)">
+  
+
+      <!-- Firebase controls -->
+     <button onclick="saveToFirebase()">☁️ Save</button>
+
+      <button onclick="loadFromFirebase()">⬇️ Load</button>
+
+      
+    </div>
+<div id="syncStatus" class="sync-status">Sync: Local</div>
+    <h1 style="margin:0;font-size:24px;color:var(--primary);">🚚 Tanker Management</h1>
+
+  <div class="user-info">
+    <span id="welcomeUser"></span>
+    <button id="logoutBtn" onclick="logout()" style="display:none;">
+      Logout
+    </button>
+  </div>
+</div>
+
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard"></div>
+
+  <!-- Add Order -->
+  <div class="card" id="addOrderCard">
+   <h3>➕Add Order</h3>
+   <div class="flex">
+     <div><label>Order Date</label><input type="date" id="orderDate"></div>
+     <div><label>Schedule Date</label><input type="date" id="scheduleDate"></div>
+     <div><label>Party</label><input list="partyList" id="orderParty"><datalist id="partyList"></datalist></div>
+     <div><label>Item</label><input type="text" id="orderItem" value="CSL"></div>
+     <div><label>Order Qty</label><input type="number" id="orderQty"></div>
+     <div style="align-self:flex-end;"><button onclick="addOrder()">Add Order</button></div>
+   </div>
+</div>
+<!-- Add Tanker -->
+<div class="card" id="tankerCard">
+<h3>🚚Add Tanker</h3>
+  
+
+  <div class="flex">
+
+
+    <!-- Tanker No -->
+    <div>
+      <label>Tanker No</label>
+      <input type="text" id="tankerNo" placeholder="Enter tanker">
+    </div>
+
+    <!-- Capacity -->
+    <div>
+      <label>Capacity</label>
+      <input type="number" id="tankerCapacity" placeholder="Mt">
+    </div>
+
+<div>
+  <label>Tanker Type</label>
+  <select id="tankerType" required>
+    <option value="">Select Type</option>
+    <option value="SS">SS</option>
+    <option value="MS">MS</option>
+  </select>
+</div>
+
+
+
+    <!-- Add Tanker Button -->
+    <div style="align-self:flex-end;">
+      <button onclick="addTanker()">Add Tanker</button>
+    </div>
+  </div>
+
+  <!-- List always outside flex -->
+</div>
+
+
+    <div class="card" id="tankerDetailsCard">
+<h3>Tanker Details</h3>
+<div style="max-height:300px;overflow:auto;">
+      <table id="tankerTable">
+        <thead>
+          <tr>
+            <th>Tanker No</th>
+<th>Capacity</th>
+<th onclick="sortTankerByType()" style="cursor:pointer;">
+  Type ⬍
+</th>
+<th>Status</th>
+<th>Assigned Order</th>
+<th>Active</th>
+<th onclick="sortTankerByNotes()" style="cursor:pointer;">Notes⬍</th>
+<th>Actions</th>
+
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card" id="ordersCard">
+   <h3>Orders Table</h3>
+   <div style="max-height:300px;overflow:auto;">
+
+   <table id="orderTable">
+
+<thead>
+<tr>
+<th>Sr No</th>
+<th>Order Date <button class="sort-btn" onclick="sortOrders('date')">⬍</button></th>
+<th>Schedule Date <button class="sort-btn" onclick="multiSort()">⬍</button></th>
+<th>Party <button class="sort-btn" onclick="sortOrders('party')">⬍</button></th>
+<th>Item <button class="sort-btn" onclick="sortOrders('item')">⬍</button></th>
+<th>Qty</th>
+<th>Tanker No</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+
+     <tbody></tbody>
+   </table>
+   </div>
+  </div>
+
+ <div class="card" id="dispatchedOrdersCard">
+  <h3>Dispatched Orders</h3>
+  <div style="max-height:300px;overflow:auto;">
+    <table id="dispatchedOrderTable">
+      <thead>
+        <tr>
+          <th>Sr No</th><th>Order Date</th><th>Schedule Date</th>
+          <th>Party</th><th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" id="completedOrdersCard">
+  <h3>Completed Orders</h3>
+  <div style="max-height:300px;overflow:auto;">
+    <table id="completedOrderTable">
+      <thead>
+        <tr>
+          <th>Sr No</th><th>Order Date</th><th>Schedule Date</th>
+          <th>Party</th><th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<!-- Original app script (localStorage) -->
+<script>
+
+
+document.getElementById("loginSection").style.display = "block";
+document.querySelector(".container").style.display = "none";
+
+
+// Data (initial local copy)
+let orders = JSON.parse(localStorage.getItem('orders')||'[]');
+let tankers = JSON.parse(localStorage.getItem('tankers')||'[]');
+let parties = JSON.parse(localStorage.getItem('parties')||'[]');
+let currentTankerFilter = 'active';
+
+/* ---------- PARTY ---------- */
+function refreshPartyDropdown(){
+  let dl=document.getElementById('partyList'); 
+  dl.innerHTML='';
+
+  parties.forEach(p=>{
+    let o=document.createElement('option'); 
+    o.value=p; 
+    dl.appendChild(o);
+  });
+}
+function addParty(){
+  let name=document.getElementById('partyName').value.trim();
+  if(!name) return;
+  if(!parties.includes(name)){parties.push(name); save(); refreshPartyDropdown();}
+  document.getElementById('partyName').value='';
+}
+function deleteParty(i){
+  if(!confirm("Delete party? This will not remove existing orders for that party.")) return;
+  parties.splice(i,1); save(); refreshPartyDropdown();
+}
+
+/* ---------- TANKERS ---------- */
+function addTanker(){
+  const no = document.getElementById('tankerNo').value.trim();
+  const cap = Number(document.getElementById('tankerCapacity').value);
+  const type = document.getElementById('tankerType').value;
+
+  if(!no || !cap || !type){
+    alert("Please enter Tanker No, Capacity and Type");
+    return;
+  }
+
+  if(tankers.some(t => t.no === no)){
+    alert("Tanker already exists!");
+    return;
+  }
+
+  tankers.push({
+    no: no,
+    capacity: cap,
+    type: type,
+    status: "Empty",
+    assignedOrder: null,
+    active: true,
+    notes: ""
+  });
+
+  save();
+  showTankers();
+  updateDashboard();
+
+  document.getElementById('tankerNo').value = '';
+  document.getElementById('tankerCapacity').value = '';
+  document.getElementById('tankerType').value = '';
+}
+
+function toggleOrderForm(){
+  const order = document.getElementById('addOrderCard');
+  const tanker = document.getElementById('tankerCard');
+
+  if(order.classList.contains('active')){
+    order.classList.remove('active');
+  } else {
+    order.classList.add('active');
+    tanker.classList.remove('active');
+    order.scrollIntoView({behavior:'smooth'});
+  }
+}
+
+function toggleTankerForm(){
+  const tanker = document.getElementById('tankerCard');
+  const order = document.getElementById('addOrderCard');
+
+  if(tanker.classList.contains('active')){
+    tanker.classList.remove('active');
+  } else {
+    tanker.classList.add('active');
+    order.classList.remove('active');
+    tanker.scrollIntoView({behavior:'smooth'});
+  }
+}
+
+
+function showTankers() {
+  let tb = document.querySelector('#tankerTable tbody'); tb.innerHTML = '';
+  const statusOrder = ["Empty","To Fill","Filled","Dispatched"];
+  const indices = tankers.map((t,i)=>i).sort((a,b)=>{
+    let ai = statusOrder.indexOf(tankers[a].status); if(ai===-1) ai=99;
+    let bi = statusOrder.indexOf(tankers[b].status); if(bi===-1) bi=99;
+    return ai-bi;
+  });
+  indices.forEach((i)=>{
+    let t = tankers[i];
+    let row = document.createElement('tr');
+    row.dataset.index = i;
+    row.innerHTML = `
+      <td contenteditable onblur="updateTanker(${i},'no',this.innerText.trim())">${escapeHtml(t.no)}</td>
+      <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
+<td>
+  <span class="type-badge type-${t.type}">
+    ${escapeHtml(t.type || '')}
+  </span>
+</td>
+
+
+      <td><span class="status-badge status-${t.status.replace(/\s/g,'')}">${escapeHtml(t.status)}</span></td>
+      <td>${escapeHtml(t.assignedOrder||'')}</td>
+      <td>
+        <select onchange="updateTanker(${i},'active',this.value)">
+          <option value="true" ${t.active?'selected':''}>Yes</option>
+          <option value="false" ${!t.active?'selected':''}>No</option>
+        </select>
+      </td>
+      <td contenteditable onblur="updateTanker(${i},'notes',this.innerText)">${escapeHtml(t.notes||'')}</td>
+      <td style="white-space:nowrap">
+        <button class="action-btn" onclick="deleteTanker(${i})">🗑️</button>
+        <button class="action-btn" onclick="changeStatus(${i},'To Fill')">To Fill</button>
+        <button class="action-btn" onclick="changeStatus(${i},'Filled')">Filled</button>
+        <button class="action-btn" onclick="changeStatus(${i},'Dispatched')">Dispatch</button>
+        <button class="action-btn" onclick="changeStatus(${i},'Empty')">Empty</button>
+        <button class="action-btn" onclick="moveTankerUp(${i})">⬆</button>
+        <button class="action-btn" onclick="moveTankerDown(${i})">⬇</button>
+      </td>`;
+    tb.appendChild(row);
+  });
+  filterTankers(currentTankerFilter);
+}
+
+function updateTanker(i, field, value) {
+  if(i<0 || i>=tankers.length) return;
+  let t = tankers[i];
+  if(field === 'capacity') value = Number(value) || 0;
+  if(field === 'active') value = (value === 'true');
+  if(field === 'no'){
+    const newNo = String(value).trim();
+    if(!newNo){ alert('Tanker number cannot be empty'); showTankers(); return; }
+    if(newNo !== t.no && tankers.some((tk,idx)=>tk.no === newNo && idx!==i)){
+      alert('Another tanker with this number exists'); showTankers(); return;
+    }
+    const old = t.no;
+    t.no = newNo;
+    orders.forEach(o=>{ if(o.tanker === old) o.tanker = newNo; if(o._completedTanker===old) o._completedTanker=newNo });
+  } else {
+    t[field] = value;
+  }
+  save(); showTankers(); showOrders(); updateDashboard();
+}
+
+
+
+let tankerSortAsc = true;
+let tankerTypeSortAsc = true;
+
+/* -------- SORT BY NOTES -------- */
+function sortTankerByNotes() {
+  tankers.sort((a, b) => {
+    const textA = (a.notes || "").toLowerCase();
+    const textB = (b.notes || "").toLowerCase();
+
+    return tankerSortAsc
+      ? textA.localeCompare(textB)
+      : textB.localeCompare(textA);
+  });
+
+  tankerSortAsc = !tankerSortAsc;
+  save();
+  showTankers();
+}
+
+/* -------- SORT BY TYPE -------- */
+function sortTankerByType() {
+  tankers.sort((a, b) => {
+    const typeA = (a.type || "").toLowerCase();
+    const typeB = (b.type || "").toLowerCase();
+
+    return tankerTypeSortAsc
+      ? typeA.localeCompare(typeB)
+      : typeB.localeCompare(typeA);
+  });
+
+  tankerTypeSortAsc = !tankerTypeSortAsc;
+  save();
+  showTankers();
+}
+
+let sortState = {
+  date: true,
+  scheduleDate: true,
+  party: true,
+  item: true
+};
+
+function sortOrders(key) {
+  let asc = sortState[key];
+
+  orders.sort((a, b) => {
+    let v1 = a[key] || "";
+    let v2 = b[key] || "";
+
+    // DATE SORTING
+    if (key === "date" || key === "scheduleDate") {
+      return asc
+        ? new Date(v1) - new Date(v2)
+        : new Date(v2) - new Date(v1);
+    }
+
+    // PARTY & ITEM SORTING (A → Z)
+    return asc
+      ? v1.toString().localeCompare(v2.toString())
+      : v2.toString().localeCompare(v1.toString());
+  });
+
+  sortState[key] = !asc; // toggle next click
+
+  save();
+  showOrders();
+}
+
+
+function multiSort() {
+
+  orders.sort((a, b) => {
+
+    // --------------------------
+    // 1) SCHEDULE DATE (ALWAYS ASC)
+    // --------------------------
+    let d1 = a.scheduleDate ? new Date(a.scheduleDate) : null;
+    let d2 = b.scheduleDate ? new Date(b.scheduleDate) : null;
+
+    if (d1 && d2) {
+      if (d1.getTime() !== d2.getTime()) {
+        return d1 - d2; // ALWAYS ASC
+      }
+    }
+    else {
+      // if one date missing, push missing to bottom
+      if (!d1 && d2) return 1;
+      if (d1 && !d2) return -1;
+    }
+
+    // --------------------------
+    // 2) ITEM (ALWAYS ASC)
+    // --------------------------
+    let item1 = (a.item || "").toLowerCase();
+    let item2 = (b.item || "").toLowerCase();
+
+    if (item1 !== item2) {
+      return item1.localeCompare(item2); // ALWAYS ASC
+    }
+
+    // --------------------------
+    // 3) PARTY (ALWAYS ASC)
+    // --------------------------
+    let p1 = (a.party || "").toLowerCase();
+    let p2 = (b.party || "").toLowerCase();
+
+    if (p1 !== p2) {
+      return p1.localeCompare(p2); // ALWAYS ASC
+    }
+
+    return 0;
+  });
+
+  save();
+  showOrders();
+}
+
+/* ===== Header filter helpers ===== */
+/* ===== Improved header filters with robust date handling ===== */
+
+function addFiltersToHeaders(){
+  const table = document.querySelector("#orderTable");
+  if(!table) return;
+  const headerCells = table.querySelectorAll("thead th");
+
+  headerCells.forEach((th, colIndex) => {
+    if(th.querySelector(".filter-input")) return; // already added
+
+   
+    
+  });
+}
+
+/* parse a cell text into ISO yyyy-mm-dd if possible; otherwise return null */
+function parseDateToISO(text){
+  if(!text) return null;
+  text = text.trim();
+  // If already ISO-like yyyy-mm-dd
+  let m = text.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(m){
+    const y=m[1], mo=String(m[2]).padStart(2,'0'), d=String(m[3]).padStart(2,'0');
+    return `${y}-${mo}-${d}`;
+  }
+  // If dd/mm/yyyy or dd-mm-yyyy
+  m = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m){
+    const d=String(m[1]).padStart(2,'0'), mo=String(m[2]).padStart(2,'0'), y=m[3];
+    return `${y}-${mo}-${d}`;
+  }
+  // Try other common formats (e.g., dd Mon yyyy) - fallback using Date parse
+  const dt = new Date(text);
+  if(!isNaN(dt.getTime())){
+    const y = dt.getFullYear();
+    const mo = String(dt.getMonth()+1).padStart(2,'0');
+    const d = String(dt.getDate()).padStart(2,'0');
+    return `${y}-${mo}-${d}`;
+  }
+  return null;
+}
+
+function filterTable(){
+  const table = document.querySelector("#orderTable");
+  if(!table) return;
+  const rows = table.querySelectorAll("tbody tr");
+  const filters = table.querySelectorAll(".filter-input");
+
+  rows.forEach(row=>{
+    let show = true;
+
+    filters.forEach(f=>{
+      if(!show) return; // already excluded
+      const col = Number(f.dataset.col);
+      const ftype = f.dataset.ftype || f.type || 'text';
+      const filterValRaw = (f.value || "").toString().trim();
+      if(!filterValRaw) return; // no filter -> ignore
+
+      const cell = row.children[col];
+      if(!cell){ show = false; return; }
+      const cellText = (cell.innerText || "").toString().trim();
+
+      if(ftype === "date" || f.type === "date"){
+        // normalize both to ISO yyyy-mm-dd
+        const cellISO = parseDateToISO(cellText);
+        const filterISO = filterValRaw; // input[type=date] gives yyyy-mm-dd
+        if(!cellISO){
+          // if cell cannot be parsed to date -> treat as not matched
+          show = false;
+        } else {
+          if(cellISO !== filterISO) show = false;
+        }
+      } else if(ftype === "select"){
+        // exact match (case-insensitive)
+        if(filterValRaw.toLowerCase() !== cellText.toLowerCase()) show = false;
+      } else {
+        // text contains match (case-insensitive)
+        if(!cellText.toLowerCase().includes(filterValRaw.toLowerCase())) show = false;
+      }
+    });
+
+    row.style.display = show ? "" : "none";
+  });
+}
+
+
+function deleteTanker(i){
+  if(i<0 || i>=tankers.length) return;
+  const t = tankers[i];
+  const assigned = orders.some(o=>o.tanker===t.no && o.status!=='Complete');
+  if(assigned){ if(!confirm('This tanker is assigned to an active order. Delete anyway?')) return; }
+  tankers.splice(i,1); save(); showTankers(); showOrders(); updateDashboard();
+}
+
+function changeStatus(i,s){ if(i<0||i>=tankers.length) return; tankers[i].status=s; if(s==='Empty'){ tankers[i].assignedOrder=null; } save(); showTankers(); filterTankers(currentTankerFilter); updateDashboard(); }
+function moveTankerUp(i){ if(i<=0) return; [tankers[i-1],tankers[i]]=[tankers[i],tankers[i-1]]; save(); showTankers(); }
+function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[i+1]]=[tankers[i+1],tankers[i]]; save(); showTankers(); }
+
+/* ---------- ORDERS ---------- */
+function addOrder(){
+  let d=document.getElementById('orderDate').value;
+  let sd=document.getElementById('scheduleDate').value;
+  let p=document.getElementById('orderParty').value.trim();
+  let item=document.getElementById('orderItem').value.trim();
+  let qty=document.getElementById('orderQty').value;
+  if(!d||!sd||!p||!item||!qty){ alert('Please fill all fields'); return; }
+  orders.push({date:d,scheduleDate:sd,party:p,item:item,orderQty:Number(qty),tanker:null,status:'Pending',notes:''});
+  save(); showOrders(); updateDashboard();
+  document.getElementById('orderDate').value=''; document.getElementById('scheduleDate').value='';
+  document.getElementById('orderParty').value=''; document.getElementById('orderQty').value='';
+}
+
+function formatDisplayDate(isoDate) {
+  if (!isoDate) return '';
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return isoDate;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+
+function showOrders(){
+  let tb=document.querySelector('#orderTable tbody');
+  let tbd=document.querySelector('#dispatchedOrderTable tbody');
+  let tbc=document.querySelector('#completedOrderTable tbody');
+  tb.innerHTML=''; tbd.innerHTML=''; tbc.innerHTML='';
+
+  orders.forEach((o,i)=>{
+
+    let tankerOpts = `<option value="">--Select--</option>`;
+    tankers.forEach(t=>{
+      const isAssignedElsewhere = orders.some((ord,j)=>j!==i && ord.tanker===t.no && ord.status!=='Complete');
+      const disabled = isAssignedElsewhere ? 'disabled' : '';
+      const sel = (t.no===o.tanker) ? 'selected' : '';
+      if(t.active && (t.status==='Filled' || t.no===o.tanker)){
+        tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>${t.no} (${t.status})</option>`;
+      }
+    });
+
+    let tankerCell = "";
+    if(o.status==="Complete"){
+      tankerCell = `<td class="tanker-locked">${o._completedTanker||""}</td>`;
+    } else if(o.status==="Dispatched"){
+      tankerCell = `<td>${o.tanker||""}</td>`;
+    } else {
+      tankerCell = `<td><select onchange="updateOrder(${i},'tanker',this.value)">${tankerOpts}</select></td>`;
+    }
+
+    let row=document.createElement('tr');
+    row.innerHTML=`
+      <td>${i+1}</td>
+
+      <td contenteditable onblur="updateOrder(${i},'date', displayToIso(this.innerText.trim()))">
+        ${isoToDisplay(o.date)}
+      </td>
+
+      <td contenteditable onblur="updateOrder(${i},'scheduleDate', displayToIso(this.innerText.trim()), true)">
+        ${isoToDisplay(o.scheduleDate)}
+      </td>
+
+      <td contenteditable onblur="updateOrder(${i},'party',this.innerText.trim())">${o.party}</td>
+
+      <td>${o.item}</td>
+
+      <td contenteditable onblur="updateOrder(${i},'orderQty',this.innerText.trim())">${o.orderQty}</td>
+
+      ${tankerCell}
+
+      <td>
+        <select onchange="updateOrder(${i},'status',this.value)">
+          <option ${o.status==='Pending'?'selected':''}>Pending</option>
+          <option ${o.status==='Dispatched'?'selected':''}>Dispatched</option>
+          <option ${o.status==='Complete'?'selected':''}>Complete</option>
+        </select>
+      </td>
+
+${o.status !== "Pending" ? `
+<td contenteditable onblur="updateOrder(${i},'notes',this.innerText.trim())">
+  ${o.notes || (tankers.find(t=>t.no===o.tanker)?.notes || '')}
+</td>
+` : ''}
+
+      <td style="white-space:nowrap;">
+        <button onclick="deleteOrder(${i})">🗑️</button>
+        <button onclick="moveOrderUp(${i})">⬆</button>
+        <button onclick="moveOrderDown(${i})">⬇</button>
+      </td>
+    `;
+
+    if(o.status==="Complete") tbc.appendChild(row);
+    else if(o.status==="Dispatched") tbd.appendChild(row);
+    else tb.appendChild(row);
+  });
+}
+
+function updateOrder(i, f, v) {
+  if (i < 0 || i >= orders.length) return;
+
+  // Convert quantity to number
+  if (f === 'orderQty') v = Number(v) || 0;
+
+  const oldTanker = orders[i].tanker;
+  orders[i][f] = v;
+
+  /* ---------------- TANKER LOGIC SAME ---------------- */
+  if (f === 'tanker') {
+    if (oldTanker && oldTanker !== v) {
+      let t = tankers.find(t => t.no === oldTanker);
+      if (t) {
+        t.status = 'Filled';
+        t.assignedOrder = null;
+      }
+    }
+
+    if (v) {
+      let t = tankers.find(t => t.no === v);
+      if (t) {
+        t.status = 'Dispatched';
+        t.assignedOrder = orders[i].party;
+        orders[i].status = 'Dispatched';
+      }
+    }
+  }
+
+  /* ---------------- COMPLETE STATUS LOGIC ---------------- */
+  if (f === 'status' && v === 'Complete') {
+    let tNo = orders[i].tanker;
+    if (tNo) {
+      let t = tankers.find(t => t.no === tNo);
+      if (t) {
+        t.status = 'Empty';
+        t.assignedOrder = null;
+      }
+      orders[i]._completedTanker = tNo;
+    }
+  }
+
+  save();
+
+  /* -------------------------------------------------------
+     🔥 LIVE MULTI-COLUMN SORT (Auto Reorder)
+     PRIORITY:
+     1️⃣ Schedule Date
+     2️⃣ Item
+     3️⃣ Party
+  -------------------------------------------------------- */
+
+  if (f === "scheduleDate" || f === "item" || f === "party") {
+    multiSort();   // auto jump to correct row
+  } else {
+    showOrders();  // normal refresh
+  }
+
+  showTankers();
+  updateDashboard();
+}
+
+// --- add these two lines right after the above ---
+addFiltersToHeaders();
+filterTable();
+
+function deleteOrder(i){ if(!confirm('Delete this order?')) return; orders.splice(i,1); save(); showOrders(); updateDashboard(); }
+function moveOrderUp(i){ if(i<=0) return; [orders[i-1],orders[i]]=[orders[i],orders[i-1]]; save(); showOrders(); }
+function moveOrderDown(i){ if(i>=orders.length-1) return; [orders[i],orders[i+1]]=[orders[i+1],orders[i]]; save(); showOrders(); }
+function resetManualOrder(){ if(confirm('Reset manual orders?')){ orders=[]; save(); showOrders(); updateDashboard(); }}
+
+/* ---------- DASHBOARD ---------- */
+function updateDashboard(){
+  const total = tankers.length;
+  const active = tankers.filter(t=>t.active).length;
+  const empty = tankers.filter(t=>t.status==='Empty'&& t.active).length;   
+const inactive = tankers.filter(t=>!t.active).length;
+  const filled = tankers.filter(t=>t.status==='Filled').length;
+  const disp = tankers.filter(t=>t.status==='Dispatched').length;
+  
+  const pending = orders.filter(o=>o.status==='Pending').length;
+  const complete = orders.filter(o=>o.status==='Complete').length;
+  let d=document.getElementById('dashboard');
+  d.innerHTML=`
+    <div class="card" onclick="scrollToSection('tankerCard');filterTankers('all')">🔢Total:<br><strong>${total}</strong></div>
+    
+<div class="card" onclick="scrollToSection('tankerCard');filterTankers('inactive')">🚫Inactive:<br><strong>${inactive}</strong></div>
+<div class="card" onclick="scrollToSection('tankerCard');filterTankers('Empty')">⚪Empty:<br><strong>${empty}</strong></div>
+<div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
+    
+
+    <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
+    <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
+  <div class="card" onclick="scrollToSection('ordersCard')">⏳Pending:<br><strong>${pending}</strong></div>   
+ <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Dispatched')">🚛Dispatched:<br><strong>${disp}</strong></div>
+    
+  
+    <div class="card" onclick="scrollToSection('completedOrdersCard')">🎉Complete:<br><strong>${complete}</strong></div>
+  `;
+  filterTankers('active');
+}
+function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+function filterTankers(status){
+  currentTankerFilter = status;
+  document.querySelectorAll('#tankerTable tbody tr').forEach(tr=>{
+    const idx = Number(tr.dataset.index);
+    const t = tankers[idx];
+    if(!t){ tr.style.display='none'; return; }
+    let show=false;
+    if(status==='all') show=true;
+    else if(status==='active') show=t.active;
+    else if(status==='inactive') show=!t.active;
+    else if(status==='Empty') show=(t.status==='Empty' && t.active);
+    else show = (t.status===status);
+    tr.style.display=show?'':'none';
+  });
+}
+
+/* ---------- SAVE / BACKUP ---------- */
+function save(){ 
+  localStorage.setItem('orders',JSON.stringify(orders)); 
+  localStorage.setItem('tankers',JSON.stringify(tankers)); 
+  localStorage.setItem('parties',JSON.stringify(parties)); 
+}
+function downloadBackup(){
+  let data = JSON.stringify({orders,tankers,parties});
+  let blob = new Blob([data], {type:'application/json'});
+  let now = new Date();
+  let timestamp = now.getFullYear() + "-" 
+                + String(now.getMonth()+1).padStart(2,'0') + "-"
+                + String(now.getDate()).padStart(2,'0') + "_"
+                + String(now.getHours()).padStart(2,'0') + "-"
+                + String(now.getMinutes()).padStart(2,'0') + "-"
+                + String(now.getSeconds()).padStart(2,'0');
+  let filename = `TankerBackup_${timestamp}.json`;
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+function restoreBackup(e){
+  let file=e.target.files[0];
+  let reader=new FileReader();
+  reader.onload=function(){
+    try{
+      let d=JSON.parse(reader.result);
+      orders=d.orders||[]; tankers=d.tankers||[]; parties=d.parties||[];
+      save(); refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard();
+    }catch(err){ alert('Invalid backup file'); }
+  };
+  reader.readAsText(file);
+}
+function resetFilter(){ filterTankers('active'); }
+
+/* ---------- DATE HELPERS ---------- */
+function isoToDisplay(iso){
+  if(!iso) return "";
+  const p = iso.split("-");
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function displayToIso(text){
+  text = text.trim();
+  let m = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m){
+    let d = m[1].padStart(2,'0');
+    let mth = m[2].padStart(2,'0');
+    let y = m[3];
+    return `${y}-${mth}-${d}`;
+  }
+  return text; 
+}
+
+
+window.signup = async function () {
+
+  const nameEl = document.getElementById("signupName");
+  const emailEl = document.getElementById("signupEmail");
+  const passEl = document.getElementById("signupPassword");
+
+  if (!nameEl || !mobileEl || !emailEl || !passEl) {
+    alert("Form ID mismatch. Check signup input IDs.");
+    console.error("Missing element:",
+      nameEl, mobileEl, emailEl, passEl
+    );
+    return;
+  }
+
+  const name = nameEl.value.trim();
+  const mobile = mobileEl.value.trim();
+  const email = emailEl.value.trim();
+  const password = passEl.value.trim();
+
+  if (!name || !mobile || !email || !password) {
+    alert("Fill all fields");
+    return;
+  }
+
+  try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, "users", userCred.user.uid), {
+      name,
+      mobile,
+      email,
+      role: "user",
+      createdAt: Date.now()
+    });
+
+    alert("Signup successful");
+
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+
+};
+
+
+window.login = async function(){
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  await signInWithEmailAndPassword(auth, email, password);
+};
+
+window.logout = async function(){
+  await signOut(auth);
+};
+
+/* ---------- UTILS ---------- */
+function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- INIT ---------- */
+refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard();
+
+
+/* ---------- FAB DRAG (MOBILE) ---------- */
+
+window.addEventListener('load', function(){
+
+  const fab = document.querySelector('.mobile-fab');
+  if(!fab) return;
+
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  fab.addEventListener('touchstart', function(e){
+    isDragging = true;
+    offsetX = e.touches[0].clientX - fab.offsetLeft;
+    offsetY = e.touches[0].clientY - fab.offsetTop;
+  });
+
+  document.addEventListener('touchmove', function(e){
+    if(!isDragging) return;
+
+    let x = e.touches[0].clientX - offsetX;
+    let y = e.touches[0].clientY - offsetY;
+
+    const maxX = window.innerWidth - fab.offsetWidth;
+    const maxY = window.innerHeight - fab.offsetHeight;
+
+    x = Math.max(0, Math.min(x, maxX));
+    y = Math.max(0, Math.min(y, maxY));
+
+    fab.style.left = x + 'px';
+    fab.style.top = y + 'px';
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+  });
+
+  document.addEventListener('touchend', function(){
+    isDragging = false;
+  });
+
+});
+
+async function loadUserData(uid) {
+
+  const snap = await getDoc(doc(db, "tankerData", uid));
+
+  if (snap.exists()) {
+    const data = snap.data();
+    orders = data.orders || [];
+    tankers = data.tankers || [];
+    parties = data.parties || [];
+    showOrders();
+    showTankers();
+    updateDashboard();
+  }
+
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const formatted = `${yyyy}-${mm}-${dd}`; // format required for <input type="date">
+  document.getElementById('orderDate').value = formatted;
+  document.getElementById('scheduleDate').value = formatted;
+});
+
+</script>
+
+<!-- Firebase Realtime Database integration (module) -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+
+import { collection, getDocs } from 
+"https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+async function loadAllUsersData() {
+
+  const querySnapshot = await getDocs(collection(db, "tankerData"));
+
+  console.log("Admin View:");
+
+  querySnapshot.forEach((docSnap) => {
+    console.log("User ID:", docSnap.id);
+    console.log(docSnap.data());
+  });
+
+  alert("Admin: All users data loaded (Check Console)");
+}
+
+
+const firebaseConfig = {
+   apiKey: "AIzaSyDnH5ttpi5dH6479Y1pxbNhwBD4euctetk",
+  authDomain: "tanker-management-9d24c.firebaseapp.com",
+  projectId: "tanker-management-9d24c",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+window.showLogin = function(){
+  document.getElementById("signupBox").style.display = "none";
+  document.getElementById("loginBox").style.display = "block";
+}
+
+window.showSignup = function(){
+  document.getElementById("signupBox").style.display = "block";
+  document.getElementById("loginBox").style.display = "none";
+}
+
+/* ================== SIGNUP ================== */
+window.signup = async function () {
+
+  const nameEl = document.getElementById("signupName");
+  const emailEl = document.getElementById("signupEmail");
+  const passEl = document.getElementById("signupPassword");
+
+  // 🛑 Agar koi element missing ho
+  if (!nameEl || !emailEl || !passEl) {
+    console.error("Missing signup fields:", {
+      nameEl,
+      emailEl,
+      passEl
+    });
+    alert("Signup form ID mismatch. Check HTML IDs.");
+    return;
+  }
+
+  const name = nameEl.value.trim();
+  const email = emailEl.value.trim();
+  const password = passEl.value.trim();
+
+  if (!name || !email || !password) {
+    alert("Fill all fields");
+    return;
+  }
+
+  try {
+
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, "users", userCred.user.uid), {
+      name,
+      email,
+      role: "user",
+      createdAt: Date.now()
+    });
+
+    alert("Signup successful");
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+
+};
+
+
+/* ================== LOGIN ================== */
+window.login = async function () {
+
+  const emailEl = document.getElementById("loginEmail");
+  const passEl = document.getElementById("loginPassword");
+
+  if (!emailEl || !passEl) {
+    alert("Login fields missing");
+    return;
+  }
+
+  const email = emailEl.value;
+  const password = passEl.value;
+
+  if (!email || !password) {
+    alert("Fill all fields");
+    return;
+  }
+
+  await signInWithEmailAndPassword(auth, email, password);
+};
+
+
+/* ================== LOGOUT ================== */
+window.logout = async function () {
+
+  try {
+
+    await signOut(auth);
+    alert("Logged out");
+
+  } catch (error) {
+    alert(error.message);
+    console.error(error);
+  }
+
+};
+
+
+/* ================== AUTH STATE ================== */
+onAuthStateChanged(auth, async (user) => {
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  const welcomeUser = document.getElementById("welcomeUser");
+
+  if (!user) {
+    document.getElementById("loginSection").style.display = "block";
+    document.querySelector(".container").style.display = "none";
+    logoutBtn.style.display = "none";
+    return;
+  }
+
+  document.getElementById("loginSection").style.display = "none";
+  document.querySelector(".container").style.display = "block";
+  logoutBtn.style.display = "inline-block";
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+
+  if (!snap.exists()) return;
+
+  const userData = snap.data();
+
+  welcomeUser.innerText = "👤 " + userData.name;
+
+  // 👑 If Admin
+  if (userData.role === "admin") {
+    loadAllUsersData();   // Admin function
+  } else {
+    loadUserData(user.uid);  // Normal user function
+  }
+
+});
+
+/* ---------------- OVERRIDE SAVE ---------------- */
+window.save = async function(){
+
+  try { localSave(); } catch(e){ console.warn(e); }
+
+  if(!currentUser) return;
+  if(isApplyingRemote) return;
+
+  try{
+    await setDoc(doc(db, "tankerData", currentUser.uid), {
+      orders,
+      tankers,
+      parties,
+      updatedAt: Date.now()
+    });
+
+    setSyncStatus("Online (saved)", "#dff0d8");
+
+  }catch(err){
+    console.error(err);
+    setSyncStatus("Offline (save failed)", "#ffd6d6");
+  }
+
+};
+
+
+/* ---------------- INITIAL CHECK ---------------- */
+async function initialCloudCheck(){
+
+  if(!currentUser) return;
+
+  try{
+    const snap = await getDoc(doc(db, "tankerData", currentUser.uid));
+
+    if(!snap.exists()){
+      await setDoc(doc(db, "tankerData", currentUser.uid), {
+        orders,
+        tankers,
+        parties,
+        updatedAt: Date.now()
+      });
+
+      setSyncStatus("Uploaded local data", "#d0ebff");
+    } else {
+      setSyncStatus("Online", "#d0ebff");
+    }
+
+  }catch(err){
+    console.warn(err);
+    setSyncStatus("Offline (local only)", "#fff3cd");
+  }
+}
+
+
+/* ---------------- SYNC STATUS ---------------- */
+function setSyncStatus(text, color){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.innerText = "Sync: " + text;
+  el.style.background = color || "#fff";
+}
+
+</script>
+
+<!-- 📱 Mobile Floating Buttons -->
+
+<div class="mobile-fab">
+  <button onclick="toggleOrderForm()">➕ Order</button>
+  <button onclick="toggleTankerForm()">🚚 Tanker</button>
+
+
+</div>
+
+
+</body>
+</html>
