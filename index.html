@@ -1608,6 +1608,8 @@ onAuthStateChanged(auth, async (user) => {
   showTankers();
   updateDashboard();
 });
+
+
 /* ---------------- OVERRIDE SAVE ---------------- */
 window.save = async function(){
 
@@ -1673,7 +1675,8 @@ function setSyncStatus(text, color){
 
 <!-- 📱 Mobile Floating Buttons -->
 
-<div class="mobile-fab">
+<div id="mobileFab" class="mobile-fab" style="display:none;">
+   
   <button onclick="toggleOrderForm()">➕ Order</button>
   <button onclick="toggleTankerForm()">🚚 Tanker</button>
 
