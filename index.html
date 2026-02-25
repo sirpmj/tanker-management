@@ -410,7 +410,7 @@ margin-left:4px;
 
 
   <!-- ================= SIGNUP ================= -->
-  <div id="signupBox" class="auth-box">
+  <div id="signupBox" class="auth-box" style="display:none;">
 
 <h1 class="app-title">🚚 Tanker Management</h1>
     <h2>📝 Signup</h2>
@@ -430,7 +430,7 @@ margin-left:4px;
 
 
   <!-- ================= LOGIN ================= -->
-  <div id="loginBox" class="auth-box" style="display:none;">
+  <div id="loginBox" class="auth-box">
 <h1 class="app-title">🚚 Tanker Management</h1>
 
     <h2>🔐 Login</h2>
@@ -469,7 +469,6 @@ margin-left:4px;
 
       
     </div>
-<div id="syncStatus" class="sync-status">Sync: Local</div>
     <h1 style="margin:0;font-size:24px;color:var(--primary);">🚚 Tanker Management</h1>
 
   <div class="user-info">
@@ -515,6 +514,12 @@ margin-left:4px;
       <input type="number" id="tankerCapacity" placeholder="Mt">
     </div>
 
+<!-- Transport Name -->
+<div>
+  <label>Transport Name</label>
+  <input type="text" id="transportName" placeholder="Transport Company">
+</div>
+
 <div>
   <label>Tanker Type</label>
   <select id="tankerType" required>
@@ -543,6 +548,7 @@ margin-left:4px;
         <thead>
           <tr>
             <th>Tanker No</th>
+<th>Transporter</th>
 <th>Capacity</th>
 <th onclick="sortTankerByType()" style="cursor:pointer;">
   Type ⬍
@@ -674,6 +680,7 @@ function addTanker(){
   tankers.push({
     no: no,
     capacity: cap,
+transport: transport,
     type: type,
     status: "Empty",
     assignedOrder: null,
@@ -687,6 +694,7 @@ function addTanker(){
 
   document.getElementById('tankerNo').value = '';
   document.getElementById('tankerCapacity').value = '';
+
   document.getElementById('tankerType').value = '';
 }
 
@@ -731,6 +739,10 @@ function showTankers() {
     row.dataset.index = i;
     row.innerHTML = `
       <td contenteditable onblur="updateTanker(${i},'no',this.innerText.trim())">${escapeHtml(t.no)}</td>
+
+<td contenteditable onblur="updateTanker(${i},'transport',this.innerText.trim())">
+  ${t.transport || ""}
+</td>
       <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
 <td>
   <span class="type-badge type-${t.type}">
