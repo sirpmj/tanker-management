@@ -462,10 +462,7 @@ margin-left:4px;
       <input type="file" id="restoreFile" style="display:none" onchange="restoreBackup(event)">
   
 
-      <!-- Firebase controls -->
-     <button onclick="saveToFirebase()">☁️ Save</button>
-
-      <button onclick="loadFromFirebase()">⬇️ Load</button>
+  
 
       
     </div>
@@ -666,6 +663,7 @@ function addTanker(){
   const no = document.getElementById('tankerNo').value.trim();
   const cap = Number(document.getElementById('tankerCapacity').value);
   const type = document.getElementById('tankerType').value;
+  const transport = document.getElementById('transportName').value.trim(); // ✅ ADD THIS
 
   if(!no || !cap || !type){
     alert("Please enter Tanker No, Capacity and Type");
@@ -680,7 +678,7 @@ function addTanker(){
   tankers.push({
     no: no,
     capacity: cap,
-transport: transport,
+    transport: transport,   // ✅ now correct
     type: type,
     status: "Empty",
     assignedOrder: null,
@@ -694,8 +692,8 @@ transport: transport,
 
   document.getElementById('tankerNo').value = '';
   document.getElementById('tankerCapacity').value = '';
-
   document.getElementById('tankerType').value = '';
+  document.getElementById('transportName').value = '';
 }
 
 function toggleOrderForm(){
@@ -1449,7 +1447,7 @@ async function loadAllUsersData() {
     console.log(docSnap.data());
   });
 
-  alert("Admin: All users data loaded (Check Console)");
+
 }
 
 
