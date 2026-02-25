@@ -401,6 +401,32 @@ margin-left:4px;
   -webkit-text-fill-color: transparent;
 }
 
+
+/* FORCE FULLSCREEN CENTER LOGIN */
+#loginSection.auth-container {
+  position: fixed !important;
+  inset: 0 !important;     /* top:0 left:0 right:0 bottom:0 */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: linear-gradient(135deg, #4e73df, #1cc88a) !important;
+}
+
+/* Remove any body spacing */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+}
+
+/* Ensure main app hidden */
+#mainApp {
+  display: none;
+}
 </style>
 </head>
 
@@ -635,6 +661,7 @@ let orders = JSON.parse(localStorage.getItem('orders')||'[]');
 let tankers = JSON.parse(localStorage.getItem('tankers')||'[]');
 let parties = JSON.parse(localStorage.getItem('parties')||'[]');
 let currentTankerFilter = 'active';
+let currentUser = null;
 
 /* ---------- PARTY ---------- */
 function refreshPartyDropdown(){
@@ -1246,20 +1273,38 @@ function downloadBackup(){
   a.download = filename;
   a.click();
 }
-function restoreBackup(e){
-  let file=e.target.files[0];
-  let reader=new FileReader();
-  reader.onload=function(){
+async function restoreBackup(e){
+
+  let file = e.target.files[0];
+  let reader = new FileReader();
+
+  reader.onload = async function(){
+
     try{
-      let d=JSON.parse(reader.result);
-      orders=d.orders||[]; tankers=d.tankers||[]; parties=d.parties||[];
-      save(); refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard();
-    }catch(err){ alert('Invalid backup file'); }
+
+      let d = JSON.parse(reader.result);
+
+      orders = d.orders || [];
+      tankers = d.tankers || [];
+      parties = d.parties || [];
+
+      showOrders();
+      showTankers();
+      updateDashboard();
+
+      // 🔥 RESTORE KE BAAD FIREBASE MEIN SAVE
+      await save();
+
+      alert("Restore successful & Firebase updated");
+
+    }catch(err){
+      alert("Invalid backup file");
+    }
+
   };
+
   reader.readAsText(file);
 }
-function resetFilter(){ filterTankers('active'); }
-
 /* ---------- DATE HELPERS ---------- */
 function isoToDisplay(iso){
   if(!iso) return "";
@@ -1286,20 +1331,16 @@ window.signup = async function () {
   const emailEl = document.getElementById("signupEmail");
   const passEl = document.getElementById("signupPassword");
 
-  if (!nameEl || !mobileEl || !emailEl || !passEl) {
+  if (!nameEl || !emailEl || !passEl) {
     alert("Form ID mismatch. Check signup input IDs.");
-    console.error("Missing element:",
-      nameEl, mobileEl, emailEl, passEl
-    );
     return;
   }
 
   const name = nameEl.value.trim();
-  const mobile = mobileEl.value.trim();
   const email = emailEl.value.trim();
   const password = passEl.value.trim();
 
-  if (!name || !mobile || !email || !password) {
+  if (!name || !email || !password) {
     alert("Fill all fields");
     return;
   }
@@ -1309,21 +1350,17 @@ window.signup = async function () {
 
     await setDoc(doc(db, "users", userCred.user.uid), {
       name,
-      mobile,
       email,
       role: "user",
       createdAt: Date.now()
     });
 
     alert("Signup successful");
-
   } catch (err) {
     alert(err.message);
     console.error(err);
   }
-
 };
-
 
 window.login = async function(){
   const email = document.getElementById("loginEmail").value;
@@ -1565,58 +1602,66 @@ onAuthStateChanged(auth, async (user) => {
   const welcomeUser = document.getElementById("welcomeUser");
 
   if (!user) {
+    currentUser = null;
     document.getElementById("loginSection").style.display = "block";
     document.querySelector(".container").style.display = "none";
     logoutBtn.style.display = "none";
     return;
   }
 
+  currentUser = user;
+
   document.getElementById("loginSection").style.display = "none";
   document.querySelector(".container").style.display = "block";
   logoutBtn.style.display = "inline-block";
 
-  const snap = await getDoc(doc(db, "users", user.uid));
-
-  if (!snap.exists()) return;
-
-  const userData = snap.data();
-
-  welcomeUser.innerText = "👤 " + userData.name;
-
-  // 👑 If Admin
-  if (userData.role === "admin") {
-    loadAllUsersData();   // Admin function
-  } else {
-    loadUserData(user.uid);  // Normal user function
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  if(userSnap.exists()){
+    welcomeUser.innerText = "👤 " + userSnap.data().name;
   }
 
-});
+  // 🔥 USERWISE DATA LOAD
+  const dataSnap = await getDoc(doc(db, "tankerData", user.uid));
 
+  if(dataSnap.exists()){
+    const data = dataSnap.data();
+    orders = data.orders || [];
+    tankers = data.tankers || [];
+    parties = data.parties || [];
+  } else {
+    orders = [];
+    tankers = [];
+    parties = [];
+  }
+
+  showOrders();
+  showTankers();
+  updateDashboard();
+});
 /* ---------------- OVERRIDE SAVE ---------------- */
 window.save = async function(){
 
-  try { localSave(); } catch(e){ console.warn(e); }
-
   if(!currentUser) return;
-  if(isApplyingRemote) return;
 
   try{
+
     await setDoc(doc(db, "tankerData", currentUser.uid), {
-      orders,
-      tankers,
-      parties,
+      orders: orders,
+      tankers: tankers,
+      parties: parties,
       updatedAt: Date.now()
     });
 
-    setSyncStatus("Online (saved)", "#dff0d8");
+    setSyncStatus("Online (Saved)", "#d4edda");
 
   }catch(err){
+
     console.error(err);
-    setSyncStatus("Offline (save failed)", "#ffd6d6");
+    setSyncStatus("Save Failed", "#f8d7da");
+
   }
 
 };
-
 
 /* ---------------- INITIAL CHECK ---------------- */
 async function initialCloudCheck(){
