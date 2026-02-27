@@ -1642,7 +1642,9 @@ onAuthStateChanged(auth, async (user) => {
   document.querySelector(".container").style.display = "block";
 
   logoutBtn.style.display = "inline-block";
-  if (fab) fab.style.display = "flex";
+ if (fab && window.innerWidth <= 600) {
+  fab.style.display = "flex";
+}
 
   // Load user profile
   const userSnap = await getDoc(doc(db, "users", user.uid));
