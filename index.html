@@ -254,6 +254,8 @@ margin-left:4px;
    color:var(--primary); !important; /* Replace this with your preferred color */
 }
 
+
+
 #orderTable th:nth-child(2),
 #orderTable td:nth-child(2) {
   width: 120px;
@@ -264,13 +266,13 @@ margin-left:4px;
   width: 140px;
 }
 
-#orderTable th:nth-child(7),
-#orderTable td:nth-child(7) {
-  width: 150px;
-  max-width: 150px;
+#orderTable th:nth-child(8),
+#orderTable td:nth-child(8) {
+  width: 140px;
+  max-width: 140px;
 }
 
-#orderTable td:nth-child(7) select {
+#orderTable td:nth-child(8) select {
   width: 100%;
   padding: 3px;
   font-size: 12px;
@@ -484,6 +486,10 @@ margin-left:4px;
      <div><label>Party</label><input list="partyList" id="orderParty"><datalist id="partyList"></datalist></div>
      <div><label>Item</label><input type="text" id="orderItem" value="CSL"></div>
      <div><label>Order Qty</label><input type="number" id="orderQty"></div>
+<div>
+  <label>Rate</label>
+  <input type="number" id="orderRate" placeholder="Rate per MT">
+</div>
      <div style="align-self:flex-end;"><button onclick="addOrder()">➕Order</button></div>
    </div>
 </div>
@@ -510,7 +516,7 @@ margin-left:4px;
 <!-- Transport Name -->
 <div>
   <label>Transport Name</label>
-  <input type="text" id="transportName" placeholder="Transport Company">
+  <input type="text" id="transportName" placeholder="Enter Transport Name ">
 </div>
 
 <div>
@@ -535,13 +541,15 @@ margin-left:4px;
 
 
     <div class="card" id="tankerDetailsCard">
-<h3>Tanker Details</h3>
+<h3>Tanker Status</h3>
 <div style="max-height:300px;overflow:auto;">
       <table id="tankerTable">
         <thead>
           <tr>
             <th>Tanker No</th>
-<th>Transporter</th>
+<th onclick="sortTankerByTransport()" style="cursor:pointer;">
+  Transporter ⬍
+</th>
 <th>Capacity</th>
 <th onclick="sortTankerByType()" style="cursor:pointer;">
   Type ⬍
@@ -561,7 +569,7 @@ margin-left:4px;
 
   <!-- Orders Table -->
   <div class="card" id="ordersCard">
-   <h3>Orders Table</h3>
+   <h3>Pending Orders</h3>
    <div style="max-height:300px;overflow:auto;">
 
    <table id="orderTable">
@@ -572,8 +580,10 @@ margin-left:4px;
 <th>Order Date <button class="sort-btn" onclick="sortOrders('date')">⬍</button></th>
 <th>Schedule Date <button class="sort-btn" onclick="multiSort()">⬍</button></th>
 <th>Party <button class="sort-btn" onclick="sortOrders('party')">⬍</button></th>
+<th>Rate</th>
 <th>Item <button class="sort-btn" onclick="sortOrders('item')">⬍</button></th>
 <th>Qty</th>
+
 <th>Tanker No</th>
 <th>Status</th>
 <th>Actions</th>
@@ -593,7 +603,8 @@ margin-left:4px;
       <thead>
         <tr>
           <th>Sr No</th><th>Order Date</th><th>Schedule Date</th>
-          <th>Party</th><th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
+          <th>Party</th><th>Rate</th>
+<th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -608,7 +619,8 @@ margin-left:4px;
       <thead>
         <tr>
           <th>Sr No</th><th>Order Date</th><th>Schedule Date</th>
-          <th>Party</th><th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
+          <th>Party</th><th>Rate</th>
+<th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -826,6 +838,24 @@ function sortTankerByType() {
   showTankers();
 }
 
+let tankerTransportSortAsc = true;
+
+function sortTankerByTransport() {
+  tankers.sort((a, b) => {
+    const textA = (a.transport || "").toLowerCase();
+    const textB = (b.transport || "").toLowerCase();
+
+    return tankerTransportSortAsc
+      ? textA.localeCompare(textB)
+      : textB.localeCompare(textA);
+  });
+
+  tankerTransportSortAsc = !tankerTransportSortAsc;
+  save();
+  showTankers();
+}
+
+
 let sortState = {
   date: true,
   scheduleDate: true,
@@ -1013,9 +1043,25 @@ function addOrder(){
   let sd=document.getElementById('scheduleDate').value;
   let p=document.getElementById('orderParty').value.trim();
   let item=document.getElementById('orderItem').value.trim();
-  let qty=document.getElementById('orderQty').value;
-  if(!d||!sd||!p||!item||!qty){ alert('Please fill all fields'); return; }
-  orders.push({date:d,scheduleDate:sd,party:p,item:item,orderQty:Number(qty),tanker:null,status:'Pending',notes:''});
+  let qty = document.getElementById('orderQty').value;
+let rate = document.getElementById('orderRate').value;
+
+if(!d||!sd||!p||!item||!qty||!rate){
+  alert('Please fill all fields');
+  return;
+}
+
+orders.push({
+  date:d,
+  scheduleDate:sd,
+  party:p,
+  item:item,
+  orderQty:Number(qty),
+  rate:Number(rate),
+  tanker:null,
+  status:'Pending',
+  notes:''
+});
   save(); showOrders(); updateDashboard();
   document.getElementById('orderDate').value=''; document.getElementById('scheduleDate').value='';
   document.getElementById('orderParty').value=''; document.getElementById('orderQty').value='';
@@ -1043,7 +1089,9 @@ function showOrders(){
       const disabled = isAssignedElsewhere ? 'disabled' : '';
       const sel = (t.no===o.tanker) ? 'selected' : '';
       if(t.active && (t.status==='Filled' || t.no===o.tanker)){
-        tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>${t.no} (${t.status})</option>`;
+tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>
+  ${t.no} (${t.capacity} MT | Order: ${o.orderQty})
+</option>`;
       }
     });
 
@@ -1070,9 +1118,13 @@ function showOrders(){
 
       <td contenteditable onblur="updateOrder(${i},'party',this.innerText.trim())">${o.party}</td>
 
+<td contenteditable onblur="updateOrder(${i},'rate',this.innerText.trim())">
+  ${o.rate || 0}
+</td>
       <td>${o.item}</td>
 
       <td contenteditable onblur="updateOrder(${i},'orderQty',this.innerText.trim())">${o.orderQty}</td>
+
 
       ${tankerCell}
 
@@ -1104,6 +1156,8 @@ ${o.status !== "Pending" ? `
 }
 
 function updateOrder(i, f, v) {
+
+if (f === 'rate') v = Number(v) || 0;
   if (i < 0 || i >= orders.length) return;
 
   // Convert quantity to number
@@ -1192,12 +1246,10 @@ const inactive = tankers.filter(t=>!t.active).length;
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('inactive')">🚫Inactive:<br><strong>${inactive}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Empty')">⚪Empty:<br><strong>${empty}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
-    
-
-    <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
-    <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
-  <div class="card" onclick="scrollToSection('ordersCard')">⏳Pending:<br><strong>${pending}</strong></div>   
- <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Dispatched')">🚛Dispatched:<br><strong>${disp}</strong></div>
+<div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
+<div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
+<div class="card" onclick="scrollToSection('ordersCard')">⏳Pending:<br><strong>${pending}</strong></div>   
+<div class="card" onclick="scrollToSection('tankerCard');filterTankers('Dispatched')">🚛Dispatched:<br><strong>${disp}</strong></div>
     
   
     <div class="card" onclick="scrollToSection('completedOrdersCard')">🎉Complete:<br><strong>${complete}</strong></div>
@@ -1683,4 +1735,3 @@ function setSyncStatus(text, color){
 
 </body>
 </html>
-
