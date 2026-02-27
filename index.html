@@ -1109,18 +1109,17 @@ function addOrder(){
   let qty = document.getElementById('orderQty').value;
 let rate = document.getElementById('orderRate').value;
 
-if(!d||!sd||!p||!item||!qty||!rate){
-  alert('Please fill all fields');
+if(!d||!sd||!p||!item||!qty){
+  alert('Please fill all required fields');
   return;
 }
-
 orders.push({
   date:d,
   scheduleDate:sd,
   party:p,
   item:item,
   orderQty:Number(qty),
-  rate:Number(rate),
+  rate: rate ? Number(rate) : 0,
   tanker:null,
   status:'Pending',
   notes:''
