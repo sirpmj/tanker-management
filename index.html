@@ -451,7 +451,7 @@ margin-left:4px;
 <body>
 
 
-<div class="container">
+<div class="container" style="display:none;">
 
   <div class="top-bar">
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -1618,16 +1618,21 @@ window.logout = async function () {
 
 
 /* ================== AUTH STATE ================== */
+
 onAuthStateChanged(auth, async (user) => {
 
   const logoutBtn = document.getElementById("logoutBtn");
   const welcomeUser = document.getElementById("welcomeUser");
+  const fab = document.querySelector(".mobile-fab");
 
   if (!user) {
     currentUser = null;
+
     document.getElementById("loginSection").style.display = "block";
     document.querySelector(".container").style.display = "none";
+
     logoutBtn.style.display = "none";
+    if (fab) fab.style.display = "none";
     return;
   }
 
@@ -1635,16 +1640,18 @@ onAuthStateChanged(auth, async (user) => {
 
   document.getElementById("loginSection").style.display = "none";
   document.querySelector(".container").style.display = "block";
-  logoutBtn.style.display = "inline-block";
 
+  logoutBtn.style.display = "inline-block";
+  if (fab) fab.style.display = "flex";
+
+  // Load user profile
   const userSnap = await getDoc(doc(db, "users", user.uid));
   if(userSnap.exists()){
     welcomeUser.innerText = "👤 " + userSnap.data().name;
   }
 
-  // 🔥 USERWISE DATA LOAD
+  // Load user tanker data
   const dataSnap = await getDoc(doc(db, "tankerData", user.uid));
-
   if(dataSnap.exists()){
     const data = dataSnap.data();
     orders = data.orders || [];
@@ -1659,7 +1666,9 @@ onAuthStateChanged(auth, async (user) => {
   showOrders();
   showTankers();
   updateDashboard();
+
 });
+
 /* ---------------- OVERRIDE SAVE ---------------- */
 window.save = async function(){
 
@@ -1725,7 +1734,7 @@ function setSyncStatus(text, color){
 
 <!-- 📱 Mobile Floating Buttons -->
 
-<div class="mobile-fab">
+<div class="mobile-fab" style="display:none;">
   <button onclick="toggleOrderForm()">➕ Order</button>
   <button onclick="toggleTankerForm()">🚚 Tanker</button>
 
