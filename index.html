@@ -8,13 +8,7 @@
 :root { --primary:#4a90e2; --primary-light:#2DD4BF;--primary-dark:#3578c6; --bg:#f0f4f8; --card:#fff; --text:#333; --muted:#555; --border:#ddd; }
 body { font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding:10px; color:var(--text); display:flex; justify-content:center; }
 
-
-
-
-
 .container{width:100%;max-width:1200px;}
-
-
 
 label{font-size:12px;font-weight:600;margin-bottom:3px;color:var(--muted);display:block;}
 input,select,button,textarea{ padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
@@ -310,7 +304,10 @@ margin-left:4px;
   color:#111827;
 }
 
-
+.type-FRP{
+  background:#fce7f3;
+  color:#9d174d;
+}
 
 
 
@@ -506,8 +503,6 @@ margin-left:4px;
 </div>
 
 
-<body>
-
 
 <div class="container" style="display:none;">
 
@@ -526,6 +521,7 @@ margin-left:4px;
 
   <div class="user-info">
     <span id="welcomeUser"></span>
+<div id="syncStatus" class="sync-status">Sync: Offline</div>
     <button id="logoutBtn" onclick="logout()" style="display:none;">
       Logout
     </button>
@@ -585,6 +581,7 @@ margin-left:4px;
     <option value="">Select Type</option>
     <option value="SS">SS</option>
     <option value="MS">MS</option>
+ <option value="FRP">FRP</option>
   </select>
 </div>
 
@@ -1124,6 +1121,7 @@ orders.push({
   save(); showOrders(); updateDashboard();
   document.getElementById('orderDate').value=''; document.getElementById('scheduleDate').value='';
   document.getElementById('orderParty').value=''; document.getElementById('orderQty').value='';
+document.getElementById('orderRate').value='';
 }
 
 function formatDisplayDate(isoDate) {
@@ -1243,18 +1241,18 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
   orders[i][f] = v;
 
   /* ---------------- TANKER LOGIC SAME ---------------- */
-  if (f === 'tanker') {
+if (f === 'tanker') {
 
     let selectedTanker = tankers.find(t => t.no === v);
 
-    // 🔴 CAPACITY VALIDATION
+    // 🚨 CAPACITY VALIDATION BEFORE ASSIGN
     if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
         alert("Tanker capacity is less than order quantity");
-        showOrders();   // revert dropdown
+        showOrders();
         return;
     }
 
-    // Old tanker reset
+    // Reset old tanker
     if (oldTanker && oldTanker !== v) {
         let t = tankers.find(t => t.no === oldTanker);
         if (t) {
@@ -1263,7 +1261,9 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
         }
     }
 
-    // New tanker assign
+    // Assign new tanker
+    orders[i].tanker = v;
+
     if (v) {
         let t = tankers.find(t => t.no === v);
         if (t) {
@@ -1272,8 +1272,13 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
             orders[i].status = 'Dispatched';
         }
     }
-}
 
+    save();
+    showOrders();
+    showTankers();
+    updateDashboard();
+    return;   // 🔥 Important
+}
   /* ---------------- COMPLETE STATUS LOGIC ---------------- */
   if (f === 'status' && v === 'Complete') {
     let tNo = orders[i].tanker;
@@ -1308,8 +1313,7 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
 }
 
 // --- add these two lines right after the above ---
-addFiltersToHeaders();
-filterTable();
+
 
 function deleteOrder(i){ if(!confirm('Delete this order?')) return; orders.splice(i,1); save(); showOrders(); updateDashboard(); }
 function moveOrderUp(i){ if(i<=0) return; [orders[i-1],orders[i]]=[orders[i],orders[i-1]]; save(); showOrders(); }
@@ -1403,7 +1407,7 @@ async function restoreBackup(e){
       updateDashboard();
 
       // 🔥 RESTORE KE BAAD FIREBASE MEIN SAVE
-      await save();
+      if (window.save) await window.save();
 
       alert("Restore successful & Firebase updated");
 
@@ -1435,53 +1439,9 @@ function displayToIso(text){
 }
 
 
-window.signup = async function () {
 
-  const nameEl = document.getElementById("signupName");
-  const emailEl = document.getElementById("signupEmail");
-  const passEl = document.getElementById("signupPassword");
 
-  if (!nameEl || !emailEl || !passEl) {
-    alert("Form ID mismatch. Check signup input IDs.");
-    return;
-  }
 
-  const name = nameEl.value.trim();
-  const email = emailEl.value.trim();
-  const password = passEl.value.trim();
-
-  if (!name || !email || !password) {
-    alert("Fill all fields");
-    return;
-  }
-
-  try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      name,
-      email,
-      role: "user",
-      createdAt: Date.now()
-    });
-
-    alert("Signup successful");
-  } catch (err) {
-    alert(err.message);
-    console.error(err);
-  }
-};
-
-window.login = async function(){
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
-
-  await signInWithEmailAndPassword(auth, email, password);
-};
-
-window.logout = async function(){
-  await signOut(auth);
-};
 
 /* ---------- UTILS ---------- */
 function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1552,9 +1512,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
-  const formatted = `${yyyy}-${mm}-${dd}`; // format required for <input type="date">
-  document.getElementById('orderDate').value = formatted;
-  document.getElementById('scheduleDate').value = formatted;
+
+  const formatted = `${yyyy}-${mm}-${dd}`;
+
+  const orderDateInput = document.getElementById('orderDate');
+  const scheduleDateInput = document.getElementById('scheduleDate');
+
+  if (orderDateInput) orderDateInput.value = formatted;
+  if (scheduleDateInput) scheduleDateInput.value = formatted;
 });
 
 </script>
@@ -1644,7 +1609,10 @@ window.signup = async function () {
     alert("Fill all fields");
     return;
   }
-
+if (password.length < 6) {
+  alert("Password must be at least 6 characters");
+  return;
+}
   try {
 
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
@@ -1658,34 +1626,40 @@ window.signup = async function () {
 
     alert("Signup successful");
 
-  } catch (err) {
-    console.error(err);
+  } 
+catch (err) {
+
+  if (err.code === "auth/email-already-in-use") {
+    alert("Email already registered");
+  } else {
     alert(err.message);
   }
+
+  console.error(err);
+}
 
 };
 
 
 /* ================== LOGIN ================== */
 window.login = async function () {
-
-  const emailEl = document.getElementById("loginEmail");
-  const passEl = document.getElementById("loginPassword");
-
-  if (!emailEl || !passEl) {
-    alert("Login fields missing");
-    return;
-  }
-
-  const email = emailEl.value;
-  const password = passEl.value;
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
 
   if (!email || !password) {
-    alert("Fill all fields");
+    alert("Enter email and password");
     return;
   }
 
-  await signInWithEmailAndPassword(auth, email, password);
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Login successful");
+  } 
+catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
 };
 
 
