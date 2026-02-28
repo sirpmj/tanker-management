@@ -1092,7 +1092,7 @@ function deleteTanker(i){
   tankers.splice(i,1); save(); showTankers(); showOrders(); updateDashboard();
 }
 
-function changeStatus(i,s){ if(i<0||i>=tankers.length) return; tankers[i].status=s; if(s==='Empty'){ tankers[i].assignedOrder=null; } save(); showTankers(); filterTankers(currentTankerFilter); updateDashboard(); }
+function changeStatus(i,s){ if(i<0||i>=tankers.length) return; tankers[i].status=s; if(s==='Empty'){ tankers[i].assignedOrder=null; } save(); showTankers();  showOrders();filterTankers(currentTankerFilter); updateDashboard(); }
 function moveTankerUp(i){ if(i<=0) return; [tankers[i-1],tankers[i]]=[tankers[i],tankers[i-1]]; save(); showTankers(); }
 function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[i+1]]=[tankers[i+1],tankers[i]]; save(); showTankers(); }
 
@@ -1797,7 +1797,8 @@ async function initialCloudCheck(){
 </div>
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js');
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("Service Worker Registered"));
 }
 </script>
 
