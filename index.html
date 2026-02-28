@@ -516,6 +516,76 @@ margin-left:4px;
     transform:translate(-50%,0);
   }
 }
+
+
+
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 15px;
+  background:#fff;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+/* Title */
+.top-title{
+  font-size:20px;
+  font-weight:600;
+  color:#4e73df;
+}
+
+/* Bottom row container */
+.top-bottom{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Buttons */
+.top-bar button{
+  padding:6px 10px;
+  font-size:13px;
+  border:none;
+  border-radius:6px;
+  background:#4e73df;
+  color:#fff;
+  cursor:pointer;
+}
+
+.top-bar button:hover{
+  background:#2e59d9;
+}
+
+.user-info{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:14px;
+}
+
+/* 📱 MOBILE 2 LINE LAYOUT */
+@media(max-width:768px){
+
+  .top-bar{
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+
+  .top-title{
+    text-align:center;
+  }
+
+  .top-bottom{
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+}
 </style>
 </head>
 <body>
@@ -568,25 +638,25 @@ margin-left:4px;
 
 <div class="container" style="display:none;">
 
-  <div class="top-bar">
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <button onclick="downloadBackup()">⬇ Backup</button>
-      <button onclick="document.getElementById('restoreFile').click()">⬆ Restore</button>
-      <input type="file" id="restoreFile" style="display:none" onchange="restoreBackup(event)">
-  
+<div class="top-bar">
 
-  
-
-      
-    </div>
-    <h1 style="margin:0;font-size:24px;color:var(--primary);">🚚 Tanker Management</h1>
-
-  <div class="user-info">
-    <span id="welcomeUser"></span>
-    <button id="logoutBtn" onclick="logout()" style="display:none;">
-      Logout
-    </button>
+  <div class="top-title">
+    🚚 Tanker Management
   </div>
+
+  <div class="top-bottom">
+
+    <button onclick="downloadBackup()">⬇ Backup</button>
+    <button onclick="document.getElementById('restoreFile').click()">⬆ Restore</button>
+    <input type="file" id="restoreFile" style="display:none" onchange="restoreBackup(event)">
+
+    <div class="user-info">
+      <span> <span id="welcomeUser"></span></span>
+      <button id="logoutBtn" onclick="logout()">Logout</button>
+    </div>
+
+  </div>
+
 </div>
 
   <!-- Dashboard -->
