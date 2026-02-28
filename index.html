@@ -1161,6 +1161,20 @@ function formatDisplayDate(isoDate) {
 
 
 function showOrders(){
+
+// FIFO sort for dispatched
+let dispatchedOrders = orders
+  .filter(o => o.status === "Dispatched")
+  .sort((a,b)=> (a._dispatchTime || 0) - (b._dispatchTime || 0));
+
+// FIFO sort for completed
+let completedOrders = orders
+  .filter(o => o.status === "Complete")
+  .sort((a,b)=> (a._completeTime || 0) - (b._completeTime || 0));
+
+// Pending normal
+let pendingOrders = orders.filter(o => o.status === "Pending");
+
   let tb=document.querySelector('#orderTable tbody');
   let tbd=document.querySelector('#dispatchedOrderTable tbody');
   let tbc=document.querySelector('#completedOrderTable tbody');
@@ -1254,7 +1268,7 @@ function updateOrder(i, f, v) {
 
 // 🚨 Prevent Dispatched without tanker
 if (f === 'status' && v === 'Dispatched' && !orders[i].tanker) {
-    alert("Assign tanker first");
+    alert("Assign tanker first Cannot Dispatched without tanker");
     showOrders();
     return;
 }
@@ -1264,6 +1278,16 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
     alert("Cannot complete without tanker");
     showOrders();
     return;
+}
+
+// 🔥 SAVE DISPATCH TIME
+if (f === 'status' && v === 'Dispatched') {
+    orders[i]._dispatchTime = Date.now();
+}
+
+// 🔥 SAVE COMPLETE TIME
+if (f === 'status' && v === 'Complete') {
+    orders[i]._completeTime = Date.now();
 }
   // 👇 NOW safe to update
   orders[i][f] = v;
@@ -1682,7 +1706,7 @@ window.login = async function () {
 
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    alert("Login successful");
+    alert("✅ Login Successful!");
   } 
 catch (err) {
     alert(err.message);
@@ -1697,7 +1721,7 @@ window.logout = async function () {
   try {
 
     await signOut(auth);
-    alert("Logged out");
+    alert("👋 Logout Successful!");
 
   } catch (error) {
     alert(error.message);
