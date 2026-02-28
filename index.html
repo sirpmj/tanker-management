@@ -333,6 +333,11 @@ margin-left:4px;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
+  transition:0.3s ease;
+}
+
+.auth-box:hover{
+  box-shadow:0 12px 30px rgba(0,0,0,0.25);
 }
 
 .auth-box h2 {
@@ -468,6 +473,48 @@ margin-left:4px;
     background:#dda20a !important;
   }
 
+}
+
+
+.toast{
+  position:fixed;
+  top:20px;
+  right:20px;
+  background:#28a745;
+  color:#fff;
+  padding:12px 18px;
+  border-radius:8px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.2);
+  opacity:0;
+  transform:translateY(-20px);
+  transition:all 0.4s ease;
+  z-index:9999;
+  font-weight:500;
+  min-width:200px;
+  text-align:center;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.toast.error{
+  background:#dc3545;
+}
+
+/* 📱 Mobile ke liye center */
+@media(max-width:600px){
+  .toast{
+    left:50%;
+    right:auto;
+    transform:translate(-50%,-20px);
+    width:90%;
+  }
+
+  .toast.show{
+    transform:translate(-50%,0);
+  }
 }
 </style>
 </head>
@@ -736,6 +783,22 @@ function addParty(){
 function deleteParty(i){
   if(!confirm("Delete party? This will not remove existing orders for that party.")) return;
   parties.splice(i,1); save(); refreshPartyDropdown();
+}
+
+
+function showToast(message,type="success"){
+  const toast = document.getElementById("toast");
+  toast.innerText = message;
+  
+  toast.className = "toast show";
+  
+  if(type === "error"){
+    toast.classList.add("error");
+  }
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  },3000);
 }
 
 /* ---------- TANKERS ---------- */
@@ -1688,7 +1751,7 @@ if (password.length < 6) {
       createdAt: Date.now()
     });
 
-    alert("Signup successful");
+    showToast("Login Successful ✅");
 
   } 
 catch (err) {
@@ -1717,11 +1780,11 @@ window.login = async function () {
 
 
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("✅ Login Successful!");
+  await signInWithEmailAndPassword(auth, email, password);
+showToast("Login Successful ✅");
   } 
 catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
     console.error(err);
   }
 };
@@ -1733,7 +1796,7 @@ window.logout = async function () {
   try {
 
     await signOut(auth);
-    alert("👋 Logout Successful!");
+showToast("Logout Successful 👋");
 
   } catch (error) {
     alert(error.message);
@@ -1863,6 +1926,7 @@ if ('serviceWorker' in navigator) {
     .then(() => console.log("Service Worker Registered"));
 }
 </script>
+<div id="toast" class="toast"></div>
 
 </body>
 </html>
