@@ -251,7 +251,7 @@ margin-left:4px;
   font-size:14px !important;
 margin-left:4px;
   font-weight:600 !important;
-   color:var(--primary); !important; /* Replace this with your preferred color */
+   color:var(--primary) !important; /* Replace this with your preferred color */
 }
 
 
@@ -459,7 +459,7 @@ margin-left:4px;
 }
 </style>
 </head>
-
+<body>
 
 <div id="loginSection">
 
@@ -546,11 +546,8 @@ margin-left:4px;
      <div><label>Schedule Date</label><input type="date" id="scheduleDate"></div>
      <div><label>Party</label><input list="partyList" id="orderParty"><datalist id="partyList"></datalist></div>
      <div><label>Item</label><input type="text" id="orderItem" value="CSL"></div>
-     <div><label>Order Qty</label><input type="number" id="orderQty"></div>
-<div>
-  <label>Rate</label>
-  <input type="number" id="orderRate" placeholder="Rate per MT">
-</div>
+     <div><label>Order Qty</label><input type="number" id="orderQty"placeholder="Qty in Mt"></div>
+<div><label>Rate</label><input type="number" id="orderRate" placeholder="Rate in Mt"></div>
      <div style="align-self:flex-end;"><button onclick="addOrder()">➕Order</button></div>
    </div>
 </div>
@@ -1205,10 +1202,13 @@ ${o.status !== "Pending" ? `
 ` : ''}
 
       <td style="white-space:nowrap;">
-        <button onclick="deleteOrder(${i})">🗑️</button>
-        <button onclick="moveOrderUp(${i})">⬆</button>
-        <button onclick="moveOrderDown(${i})">⬇</button>
-      </td>
+  <button onclick="deleteOrder(${i})">🗑️</button>
+  
+  ${o.status === "Pending" ? `
+    <button onclick="moveOrderUp(${i})">⬆</button>
+    <button onclick="moveOrderDown(${i})">⬇</button>
+  ` : ``}
+</td>
     `;
 
     if(o.status==="Complete") tbc.appendChild(row);
@@ -1219,34 +1219,60 @@ ${o.status !== "Pending" ? `
 
 function updateOrder(i, f, v) {
 
-if (f === 'rate') v = Number(v) || 0;
+  if (f === 'rate') v = Number(v) || 0;
   if (i < 0 || i >= orders.length) return;
 
-  // Convert quantity to number
   if (f === 'orderQty') v = Number(v) || 0;
 
   const oldTanker = orders[i].tanker;
+
+// 🚨 Prevent Dispatched without tanker
+if (f === 'status' && v === 'Dispatched' && !orders[i].tanker) {
+    alert("Assign tanker first");
+    showOrders();
+    return;
+}
+
+// 🚨 Prevent Complete without tanker
+if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
+    alert("Cannot complete without tanker");
+    showOrders();
+    return;
+}
+  // 👇 NOW safe to update
   orders[i][f] = v;
 
   /* ---------------- TANKER LOGIC SAME ---------------- */
   if (f === 'tanker') {
-    if (oldTanker && oldTanker !== v) {
-      let t = tankers.find(t => t.no === oldTanker);
-      if (t) {
-        t.status = 'Filled';
-        t.assignedOrder = null;
-      }
+
+    let selectedTanker = tankers.find(t => t.no === v);
+
+    // 🔴 CAPACITY VALIDATION
+    if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
+        alert("Tanker capacity is less than order quantity");
+        showOrders();   // revert dropdown
+        return;
     }
 
-    if (v) {
-      let t = tankers.find(t => t.no === v);
-      if (t) {
-        t.status = 'Dispatched';
-        t.assignedOrder = orders[i].party;
-        orders[i].status = 'Dispatched';
-      }
+    // Old tanker reset
+    if (oldTanker && oldTanker !== v) {
+        let t = tankers.find(t => t.no === oldTanker);
+        if (t) {
+            t.status = 'Filled';
+            t.assignedOrder = null;
+        }
     }
-  }
+
+    // New tanker assign
+    if (v) {
+        let t = tankers.find(t => t.no === v);
+        if (t) {
+            t.status = 'Dispatched';
+            t.assignedOrder = orders[i].party;
+            orders[i].status = 'Dispatched';
+        }
+    }
+}
 
   /* ---------------- COMPLETE STATUS LOGIC ---------------- */
   if (f === 'status' && v === 'Complete') {
