@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4a90e2">
+
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🚚 Tanker Management</title>
@@ -1792,7 +1795,11 @@ async function initialCloudCheck(){
   <button class="fab-order" onclick="toggleOrderForm()">➕ Order</button>
   <button class="fab-tanker" onclick="toggleTankerForm()">🚚 Tanker</button>
 </div>
-
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
 
 </body>
 </html>
