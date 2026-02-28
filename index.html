@@ -521,7 +521,6 @@ margin-left:4px;
 
   <div class="user-info">
     <span id="welcomeUser"></span>
-<div id="syncStatus" class="sync-status">Sync: Offline</div>
     <button id="logoutBtn" onclick="logout()" style="display:none;">
       Logout
     </button>
@@ -1747,16 +1746,18 @@ window.save = async function(){
       updatedAt: Date.now()
     });
 
-    setSyncStatus("Online (Saved)", "#d4edda");
+    // Sync status removed
 
   }catch(err){
 
     console.error(err);
-    setSyncStatus("Save Failed", "#f8d7da");
+
+    // Sync status removed
 
   }
 
 };
+
 
 /* ---------------- INITIAL CHECK ---------------- */
 async function initialCloudCheck(){
@@ -1774,25 +1775,14 @@ async function initialCloudCheck(){
         updatedAt: Date.now()
       });
 
-      setSyncStatus("Uploaded local data", "#d0ebff");
-    } else {
-      setSyncStatus("Online", "#d0ebff");
     }
 
   }catch(err){
     console.warn(err);
-    setSyncStatus("Offline (local only)", "#fff3cd");
   }
 }
 
 
-/* ---------------- SYNC STATUS ---------------- */
-function setSyncStatus(text, color){
-  const el = document.getElementById('syncStatus');
-  if(!el) return;
-  el.innerText = "Sync: " + text;
-  el.style.background = color || "#fff";
-}
 
 </script>
 
