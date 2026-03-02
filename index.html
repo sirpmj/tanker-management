@@ -773,7 +773,6 @@ margin-left:4px;
 <th>Qty</th>
 
 <th>Tanker No</th>
-<th>Status</th>
 <th>Actions</th>
 </tr>
 </thead>
@@ -1305,27 +1304,26 @@ function formatDisplayDate(isoDate) {
 }
 
 
-function showOrders(){
+function showOrders() {
+  // FIFO sort for dispatched
+  let dispatchedOrders = orders
+    .filter(o => o.status === "Dispatched")
+    .sort((a,b)=> (a._dispatchTime || 0) - (b._dispatchTime || 0));
 
-// FIFO sort for dispatched
-let dispatchedOrders = orders
-  .filter(o => o.status === "Dispatched")
-  .sort((a,b)=> (a._dispatchTime || 0) - (b._dispatchTime || 0));
+  // FIFO sort for completed
+  let completedOrders = orders
+    .filter(o => o.status === "Complete")
+    .sort((a,b)=> (a._completeTime || 0) - (b._completeTime || 0));
 
-// FIFO sort for completed
-let completedOrders = orders
-  .filter(o => o.status === "Complete")
-  .sort((a,b)=> (a._completeTime || 0) - (b._completeTime || 0));
-
-// Pending normal
-let pendingOrders = orders.filter(o => o.status === "Pending");
+  // Pending normal
+  let pendingOrders = orders.filter(o => o.status === "Pending");
 
   let tb=document.querySelector('#orderTable tbody');
   let tbd=document.querySelector('#dispatchedOrderTable tbody');
   let tbc=document.querySelector('#completedOrderTable tbody');
   tb.innerHTML=''; tbd.innerHTML=''; tbc.innerHTML='';
 
-  orders.forEach((o,i)=>{
+  orders.forEach((o,i)=> {
 
     let tankerOpts = `<option value="">--Select--</option>`;
     tankers.forEach(t=>{
@@ -1333,9 +1331,9 @@ let pendingOrders = orders.filter(o => o.status === "Pending");
       const disabled = isAssignedElsewhere ? 'disabled' : '';
       const sel = (t.no===o.tanker) ? 'selected' : '';
       if(t.active && (t.status==='Filled' || t.no===o.tanker)){
-tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>
-  ${t.no} (${t.capacity} MT | Order: ${o.orderQty})
-</option>`;
+        tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>
+          ${t.no} (${t.capacity} MT | Order: ${o.orderQty})
+        </option>`;
       }
     });
 
@@ -1349,6 +1347,19 @@ tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>
     }
 
     let row=document.createElement('tr');
+
+    // Pending Orders के लिए Status select हटा दिया गया
+    let statusCell = '';
+    if(o.status !== "Pending") {
+      statusCell = `<td>
+        <select onchange="updateOrder(${i},'status',this.value)">
+          <option ${o.status==='Pending'?'selected':''}>Pending</option>
+          <option ${o.status==='Dispatched'?'selected':''}>Dispatched</option>
+          <option ${o.status==='Complete'?'selected':''}>Complete</option>
+        </select>
+      </td>`;
+    }
+
     row.innerHTML=`
       <td>${i+1}</td>
 
@@ -1362,38 +1373,32 @@ tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>
 
       <td contenteditable onblur="updateOrder(${i},'party',this.innerText.trim())">${o.party}</td>
 
-<td contenteditable onblur="updateOrder(${i},'rate',this.innerText.trim())">
-  ${o.rate || 0}
-</td>
+      <td contenteditable onblur="updateOrder(${i},'rate',this.innerText.trim())">
+        ${o.rate || 0}
+      </td>
+
       <td>${o.item}</td>
 
       <td contenteditable onblur="updateOrder(${i},'orderQty',this.innerText.trim())">${o.orderQty}</td>
 
-
       ${tankerCell}
 
-      <td>
-        <select onchange="updateOrder(${i},'status',this.value)">
-          <option ${o.status==='Pending'?'selected':''}>Pending</option>
-          <option ${o.status==='Dispatched'?'selected':''}>Dispatched</option>
-          <option ${o.status==='Complete'?'selected':''}>Complete</option>
-        </select>
-      </td>
+      ${statusCell}  <!-- Status column केवल non-Pending orders के लिए -->
 
-${o.status !== "Pending" ? `
-<td contenteditable onblur="updateOrder(${i},'notes',this.innerText.trim())">
-  ${o.notes || (tankers.find(t=>t.no===o.tanker)?.notes || '')}
-</td>
-` : ''}
+      ${o.status !== "Pending" ? `
+        <td contenteditable onblur="updateOrder(${i},'notes',this.innerText.trim())">
+          ${o.notes || (tankers.find(t=>t.no===o.tanker)?.notes || '')}
+        </td>
+      ` : ''}
 
       <td style="white-space:nowrap;">
-  <button onclick="deleteOrder(${i})">🗑️</button>
-  
-  ${o.status === "Pending" ? `
-    <button onclick="moveOrderUp(${i})">⬆</button>
-    <button onclick="moveOrderDown(${i})">⬇</button>
-  ` : ``}
-</td>
+        <button onclick="deleteOrder(${i})">🗑️</button>
+
+        ${o.status === "Pending" ? `
+          <button onclick="moveOrderUp(${i})">⬆</button>
+          <button onclick="moveOrderDown(${i})">⬇</button>
+        ` : ``}
+      </td>
     `;
 
     if(o.status==="Complete") tbc.appendChild(row);
