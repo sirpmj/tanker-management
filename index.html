@@ -817,6 +817,17 @@ margin-left:4px;
 
 </div>
 
+<div class="mobile-fab">
+
+<button class="fab-order" onclick="toggleOrderForm()">
+➕ Order
+</button>
+
+<button class="fab-tanker" onclick="toggleTankerForm()">
+🚚 Tanker
+</button>
+
+</div>
 <!-- Original app script (localStorage) -->
 <script>
 
@@ -915,8 +926,16 @@ function toggleOrderForm(){
   const order = document.getElementById('addOrderCard');
   const tanker = document.getElementById('tankerCard');
 
-  order.classList.toggle('active');
-  tanker.classList.remove('active');
+  if(order.classList.contains("active")){
+    order.classList.remove("active");
+    order.style.display="none";
+  } else {
+    order.classList.add("active");
+    order.style.display="block";
+  }
+
+  tanker.classList.remove("active");
+  tanker.style.display="none";
 
 }
 
@@ -925,14 +944,34 @@ function toggleTankerForm(){
   const tanker = document.getElementById('tankerCard');
   const order = document.getElementById('addOrderCard');
 
-  tanker.classList.toggle('active');
-  order.classList.remove('active');
+  if(tanker.classList.contains("active")){
+    tanker.classList.remove("active");
+    tanker.style.display="none";
+  } else {
+    tanker.classList.add("active");
+    tanker.style.display="block";
+  }
+
+  order.classList.remove("active");
+  order.style.display="none";
 
 }
 
 function closeForms(){
-  document.getElementById("addOrderCard").classList.remove("active");
-  document.getElementById("tankerCard").classList.remove("active");
+
+  const order = document.getElementById("addOrderCard");
+  const tanker = document.getElementById("tankerCard");
+
+  if(order){
+    order.classList.remove("active");
+    order.style.display = "none";
+  }
+
+  if(tanker){
+    tanker.classList.remove("active");
+    tanker.style.display = "none";
+  }
+
 }
 
 function showTankers() {
