@@ -166,7 +166,7 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
 
 }
 
-/* 📱 Mobile Floating Forms */
+/* Mobile Popup Forms */
 @media (max-width:600px){
 
   #addOrderCard,
@@ -178,18 +178,18 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
     max-height:75vh;
     overflow:auto;
     z-index:3000;
-    display:none;   /* default hidden */
-    cursor:auto;
+    display:none;
   }
 
-  #addOrderCard.active,
-  #tankerCard.active{
+  body.show-order #addOrderCard{
+    display:block;
+  }
+
+  body.show-tanker #tankerCard{
     display:block;
   }
 
 }
-
-
 /* --- Header filter styles (paste into existing <style>) --- */
 th { position: relative; }
 .filter-input {
@@ -684,7 +684,7 @@ body.show-tanker #tankerCard{
   <div class="card" id="addOrderCard">
  <h3 class="popup-title">
   ➕Add Order
-  <span class="popup-close" onclick="toggleOrderForm()">✖</span>
+<span class="popup-close" onclick="closeForms()">✖</span>
 </h3>
    <div class="flex">
      <div><label>Order Date</label><input type="date" id="orderDate"></div>
@@ -700,7 +700,7 @@ body.show-tanker #tankerCard{
 <div class="card" id="tankerCard">
 <h3 class="popup-title">
   🚚Add Tanker
-  <span class="popup-close" onclick="toggleTankerForm()">✖</span>
+<span class="popup-close" onclick="closeForms()">✖</span>
 </h3>  
 
   <div class="flex">
