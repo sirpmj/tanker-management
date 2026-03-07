@@ -1579,10 +1579,16 @@ function filterTankers(status){
 }
 
 /* ---------- SAVE / BACKUP ---------- */
-function save(){ 
-  localStorage.setItem('orders',JSON.stringify(orders)); 
-  localStorage.setItem('tankers',JSON.stringify(tankers)); 
-  localStorage.setItem('parties',JSON.stringify(parties)); 
+function save(){
+
+  localStorage.setItem('orders',JSON.stringify(orders));
+  localStorage.setItem('tankers',JSON.stringify(tankers));
+  localStorage.setItem('parties',JSON.stringify(parties));
+
+  if(window.save){
+     window.save();   // Firebase auto sync
+  }
+
 }
 function downloadBackup(){
   let data = JSON.stringify({orders,tankers,parties});
@@ -1621,6 +1627,37 @@ async function restoreBackup(e){
 
       // 🔥 RESTORE KE BAAD FIREBASE MEIN SAVE
       if (window.save) await window.save();
+window.save = async function () {
+
+  if (!auth.currentUser) return;
+
+  const uid = auth.currentUser.uid;
+
+  await setDoc(doc(db, "tankerData", uid), {
+    orders: orders,
+    tankers: tankers,
+    parties: parties
+  });
+
+};
+
+
+onAuthStateChanged(auth, async (user) => {
+
+  if(user){
+
+    currentUser = user;
+
+    document.getElementById("loginSection").style.display="none";
+    document.querySelector(".container").style.display="block";
+
+    document.getElementById("welcomeUser").innerText = user.email;
+
+    await loadUserData(user.uid);
+
+  }
+
+});
 
       alert("Restore successful & Firebase updated");
 
