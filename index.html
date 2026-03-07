@@ -898,18 +898,19 @@ function addTanker(){
     notes: ""
   });
 
-  save();
-  showTankers();
-  updateDashboard();
+ save();
+showTankers();
+updateDashboard();
 
-  document.getElementById('tankerNo').value = '';
-  document.getElementById('tankerCapacity').value = '';
-  document.getElementById('tankerType').value = '';
-  document.getElementById('transportName').value = '';
-}
+document.getElementById('tankerNo').value='';
+document.getElementById('tankerCapacity').value='';
+document.getElementById('tankerType').value='';
+document.getElementById('transportName').value='';
 
+// close popup
 toggleTankerForm();
 }
+
 
 function toggleOrderForm(){
   const order = document.getElementById('addOrderCard');
@@ -917,9 +918,12 @@ function toggleOrderForm(){
 
   if(order.classList.contains('active')){
     order.classList.remove('active');
+    order.style.display = "none";
   } else {
     order.classList.add('active');
+    order.style.display = "block";
     tanker.classList.remove('active');
+    tanker.style.display = "none";
     order.scrollIntoView({behavior:'smooth'});
   }
 }
@@ -930,13 +934,15 @@ function toggleTankerForm(){
 
   if(tanker.classList.contains('active')){
     tanker.classList.remove('active');
+    tanker.style.display = "none";
   } else {
     tanker.classList.add('active');
+    tanker.style.display = "block";
     order.classList.remove('active');
+    order.style.display = "none";
     tanker.scrollIntoView({behavior:'smooth'});
   }
 }
-
 
 function showTankers() {
   let tb = document.querySelector('#tankerTable tbody'); tb.innerHTML = '';
@@ -1299,14 +1305,15 @@ save();
 showOrders();
 updateDashboard();
 
-// Reset only required fields
+// reset fields
 document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-// Close form on mobile
+// close popup
 toggleOrderForm();
 }
+
 
 function formatDisplayDate(isoDate) {
   if (!isoDate) return '';
@@ -1735,6 +1742,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (orderDateInput) orderDateInput.value = formatted;
   if (scheduleDateInput) scheduleDateInput.value = formatted;
 });
+
+document.getElementById("addOrderCard").classList.remove("active");
+document.getElementById("tankerCard").classList.remove("active");
 
 </script>
 
