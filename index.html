@@ -906,9 +906,10 @@ document.getElementById('tankerNo').value='';
 document.getElementById('tankerCapacity').value='';
 document.getElementById('tankerType').value='';
 
-// close form
-document.getElementById('tankerCard').classList.remove('active');
-document.getElementById('tankerCard').style.display='none';
+// close form (mobile)
+const tankerCard = document.getElementById('tankerCard');
+tankerCard.classList.remove('active');
+tankerCard.style.display = 'none';
 }
 
 
@@ -916,12 +917,13 @@ function toggleOrderForm(){
   const order = document.getElementById('addOrderCard');
   const tanker = document.getElementById('tankerCard');
 
+  order.style.display = 'block';
+
   if(order.classList.contains('active')){
     order.classList.remove('active');
   } else {
     order.classList.add('active');
     tanker.classList.remove('active');
-    order.scrollIntoView({behavior:'smooth'});
   }
 }
 
@@ -929,12 +931,13 @@ function toggleTankerForm(){
   const tanker = document.getElementById('tankerCard');
   const order = document.getElementById('addOrderCard');
 
+  tanker.style.display = 'block';
+
   if(tanker.classList.contains('active')){
     tanker.classList.remove('active');
   } else {
     tanker.classList.add('active');
     order.classList.remove('active');
-    tanker.scrollIntoView({behavior:'smooth'});
   }
 }
 
@@ -1304,9 +1307,10 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-// close form
-document.getElementById('addOrderCard').classList.remove('active');
-document.getElementById('addOrderCard').style.display='none';
+// close form (mobile)
+const orderCard = document.getElementById('addOrderCard');
+orderCard.classList.remove('active');
+orderCard.style.display = 'none';
 }
 
 
