@@ -914,31 +914,39 @@ if(tankerCard){
 }
 
 function toggleOrderForm(){
+
   const order = document.getElementById('addOrderCard');
   const tanker = document.getElementById('tankerCard');
 
-  order.style.display = 'block';
-
   if(order.classList.contains('active')){
-    order.classList.remove('active');
-  } else {
-    order.classList.add('active');
-    tanker.classList.remove('active');
+      order.classList.remove('active');
+      order.style.display='none';
+  }else{
+      order.classList.add('active');
+      order.style.display='block';
+
+      tanker.classList.remove('active');
+      tanker.style.display='none';
   }
+
 }
 
 function toggleTankerForm(){
+
   const tanker = document.getElementById('tankerCard');
   const order = document.getElementById('addOrderCard');
 
-  tanker.style.display = 'block';
-
   if(tanker.classList.contains('active')){
-    tanker.classList.remove('active');
-  } else {
-    tanker.classList.add('active');
-    order.classList.remove('active');
+      tanker.classList.remove('active');
+      tanker.style.display='none';
+  }else{
+      tanker.classList.add('active');
+      tanker.style.display='block';
+
+      order.classList.remove('active');
+      order.style.display='none';
   }
+
 }
 
 
