@@ -898,17 +898,17 @@ function addTanker(){
     notes: ""
   });
 
-save();
-showTankers();
-updateDashboard();
+  save();
+  showTankers();
+  updateDashboard();
 
-document.getElementById('tankerNo').value = '';
-document.getElementById('tankerCapacity').value = '';
-document.getElementById('tankerType').value = '';
+document.getElementById('tankerNo').value='';
+document.getElementById('tankerCapacity').value='';
+document.getElementById('tankerType').value='';
 
-// ✅ form close
+// close form
+document.getElementById('tankerCard').classList.remove('active');
 document.getElementById('tankerCard').style.display='none';
-
 }
 
 
@@ -1304,12 +1304,10 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-// ✅ form close
+// close form
+document.getElementById('addOrderCard').classList.remove('active');
 document.getElementById('addOrderCard').style.display='none';
-
 }
-
-
 
 
 function formatDisplayDate(isoDate) {
