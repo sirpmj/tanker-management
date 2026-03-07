@@ -898,16 +898,16 @@ function addTanker(){
     notes: ""
   });
 
-  save();
-  showTankers();
-  updateDashboard();
+save();
+showTankers();
+updateDashboard();
 
-  document.getElementById('tankerNo').value = '';
+document.getElementById('tankerNo').value = '';
 document.getElementById('tankerCapacity').value = '';
 document.getElementById('tankerType').value = '';
 
-// ✅ FORM CLOSE
-document.getElementById('tankerCard').classList.remove('active');
+// ✅ form close
+document.getElementById('tankerCard').style.display='none';
 
 }
 
@@ -1304,8 +1304,8 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-// ✅ FORM CLOSE
-document.getElementById('addOrderCard').classList.remove('active');
+// ✅ form close
+document.getElementById('addOrderCard').style.display='none';
 
 }
 
