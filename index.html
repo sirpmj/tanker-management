@@ -908,6 +908,9 @@ function addTanker(){
   document.getElementById('transportName').value = '';
 }
 
+toggleTankerForm();
+}
+
 function toggleOrderForm(){
   const order = document.getElementById('addOrderCard');
   const tanker = document.getElementById('tankerCard');
@@ -1268,32 +1271,41 @@ function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[
 
 /* ---------- ORDERS ---------- */
 function addOrder(){
-  let d=document.getElementById('orderDate').value;
-  let sd=document.getElementById('scheduleDate').value;
-  let p=document.getElementById('orderParty').value.trim();
-  let item=document.getElementById('orderItem').value.trim();
-  let qty = document.getElementById('orderQty').value;
-let rate = document.getElementById('orderRate').value;
+let d=document.getElementById('orderDate').value;
+let sd=document.getElementById('scheduleDate').value;
+let p=document.getElementById('orderParty').value.trim();
+let item=document.getElementById('orderItem').value.trim();
+let qty=document.getElementById('orderQty').value;
+let rate=document.getElementById('orderRate').value;
 
 if(!d||!sd||!p||!item||!qty){
-  alert('Please fill all required fields');
-  return;
+alert('Please fill all required fields');
+return;
 }
+
 orders.push({
-  date:d,
-  scheduleDate:sd,
-  party:p,
-  item:item,
-  orderQty:Number(qty),
-  rate: rate ? Number(rate) : 0,
-  tanker:null,
-  status:'Pending',
-  notes:''
+date:d,
+scheduleDate:sd,
+party:p,
+item:item,
+orderQty:Number(qty),
+rate: rate ? Number(rate) : 0,
+tanker:null,
+status:'Pending',
+notes:''
 });
-  save(); showOrders(); updateDashboard();
-  document.getElementById('orderDate').value=''; document.getElementById('scheduleDate').value='';
-  document.getElementById('orderParty').value=''; document.getElementById('orderQty').value='';
+
+save();
+showOrders();
+updateDashboard();
+
+// Reset only required fields
+document.getElementById('orderParty').value='';
+document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
+
+// Close form on mobile
+toggleOrderForm();
 }
 
 function formatDisplayDate(isoDate) {
@@ -1938,26 +1950,18 @@ onAuthStateChanged(auth, async (user) => {
 /* ---------------- OVERRIDE SAVE ---------------- */
 window.save = async function(){
 
+  localStorage.setItem('orders',JSON.stringify(orders));
+  localStorage.setItem('tankers',JSON.stringify(tankers));
+  localStorage.setItem('parties',JSON.stringify(parties));
+
   if(!currentUser) return;
 
-  try{
-
-    await setDoc(doc(db, "tankerData", currentUser.uid), {
-      orders: orders,
-      tankers: tankers,
-      parties: parties,
-      updatedAt: Date.now()
-    });
-
-    // Sync status removed
-
-  }catch(err){
-
-    console.error(err);
-
-    // Sync status removed
-
-  }
+  await setDoc(doc(db,"tankerData",currentUser.uid),{
+    orders,
+    tankers,
+    parties,
+    updatedAt: Date.now()
+  });
 
 };
 
