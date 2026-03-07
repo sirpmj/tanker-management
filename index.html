@@ -138,40 +138,6 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
 
 }
 
-.mobile-fab{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  z-index:4000;
-}
-
-.mobile-fab button{
-  padding:12px 16px;
-  border:none;
-  border-radius:50px;
-  font-size:14px;
-  color:white;
-  cursor:pointer;
-}
-
-.fab-order{
-  background:#4CAF50;
-}
-
-.fab-tanker{
-  background:#2196F3;
-}
-
-/* Desktop par hide */
-
-@media (min-width:768px){
-  .mobile-fab{
-    display:none;
-  }
-}
 
 /* 📱 Floating Action Buttons */
 .mobile-fab{
@@ -200,7 +166,7 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
 
 }
 
-/* Mobile Popup Forms */
+/* 📱 Mobile Floating Forms */
 @media (max-width:600px){
 
   #addOrderCard,
@@ -212,18 +178,18 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
     max-height:75vh;
     overflow:auto;
     z-index:3000;
-    display:none !important;
+    display:none;   /* default hidden */
+    cursor:auto;
   }
 
-  body.show-order #addOrderCard{
-    display:block !important;
-  }
-
-  body.show-tanker #tankerCard{
-    display:block !important;
+  #addOrderCard.active,
+  #tankerCard.active{
+    display:block;
   }
 
 }
+
+
 /* --- Header filter styles (paste into existing <style>) --- */
 th { position: relative; }
 .filter-input {
@@ -622,6 +588,11 @@ margin-left:4px;
 }
 
 
+/* Default hidden */
+#addOrderCard,
+#tankerCard{
+  display:none;
+}
 
 /* When open */
 body.show-order #addOrderCard{
@@ -713,7 +684,7 @@ body.show-tanker #tankerCard{
   <div class="card" id="addOrderCard">
  <h3 class="popup-title">
   ➕Add Order
-<span class="popup-close" onclick="closeForms()">✖</span>
+  <span class="popup-close" onclick="toggleOrderForm()">✖</span>
 </h3>
    <div class="flex">
      <div><label>Order Date</label><input type="date" id="orderDate"></div>
@@ -729,7 +700,7 @@ body.show-tanker #tankerCard{
 <div class="card" id="tankerCard">
 <h3 class="popup-title">
   🚚Add Tanker
-<span class="popup-close" onclick="closeForms()">✖</span>
+  <span class="popup-close" onclick="toggleTankerForm()">✖</span>
 </h3>  
 
   <div class="flex">
@@ -2066,7 +2037,7 @@ async function initialCloudCheck(){
 
 <!-- 📱 Mobile Floating Buttons -->
 
-<div class="mobile-fab">
+<div class="mobile-fab" style="display:none;">
   <button class="fab-order" onclick="toggleOrderForm()">➕ Order</button>
   <button class="fab-tanker" onclick="toggleTankerForm()">🚚 Tanker</button>
 </div>
