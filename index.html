@@ -903,14 +903,9 @@ document.getElementById('tankerCapacity').value='';
 document.getElementById('transportName').value='';
 document.getElementById('tankerType').value='';
 
-// close tanker form
-const tankerCard = document.getElementById('tankerCard');
-
-if(tankerCard){
-   tankerCard.classList.remove('active');
-   tankerCard.style.display='none';
-}
-
+let tankerCard = document.getElementById('tankerCard');
+tankerCard.classList.remove('active');
+tankerCard.style.display = 'none';   // 🔥 important
 }
 
 function toggleOrderForm(){
@@ -1316,13 +1311,9 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-// close form (mobile)
-const orderCard = document.getElementById('addOrderCard');
-
-if(orderCard){
-   orderCard.classList.remove('active');
-   orderCard.style.display = 'none';
-}
+let orderCard = document.getElementById('addOrderCard');
+orderCard.classList.remove('active');
+orderCard.style.display='none';   // 🔥 important
 }
 
 function formatDisplayDate(isoDate) {
