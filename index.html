@@ -586,6 +586,24 @@ margin-left:4px;
   }
 
 }
+
+
+/* Default hidden */
+#addOrderCard,
+#tankerCard{
+  display:none;
+}
+
+/* When open */
+body.show-order #addOrderCard{
+  display:block;
+}
+
+body.show-tanker #tankerCard{
+  display:block;
+}
+
+
 </style>
 </head>
 <body>
@@ -903,28 +921,27 @@ document.getElementById('tankerCapacity').value='';
 document.getElementById('transportName').value='';
 document.getElementById('tankerType').value='';
 
-toggleTankerForm(); // 🔥 THIS FIX
+closeForms();
 }
 
+
+
 function toggleOrderForm(){
-
-  const order = document.getElementById('addOrderCard');
-  const tanker = document.getElementById('tankerCard');
-
-  order.classList.toggle('active');
-  tanker.classList.remove('active');
-
+  document.body.classList.add("show-order");
+  document.body.classList.remove("show-tanker");
 }
 
 function toggleTankerForm(){
-
-  const tanker = document.getElementById('tankerCard');
-  const order = document.getElementById('addOrderCard');
-
-  tanker.classList.toggle('active');
-  order.classList.remove('active');
-
+  document.body.classList.add("show-tanker");
+  document.body.classList.remove("show-order");
 }
+
+function toggleTankerForm(){
+  document.body.classList.add("show-tanker");
+  document.body.classList.remove("show-order");
+}
+
+
 
 
 function showTankers() {
@@ -1293,7 +1310,7 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-toggleOrderForm(); // 🔥 THIS FIX
+closeForms();
 }
 
 function formatDisplayDate(isoDate) {
