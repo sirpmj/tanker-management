@@ -138,6 +138,40 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
 
 }
 
+.mobile-fab{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index:4000;
+}
+
+.mobile-fab button{
+  padding:12px 16px;
+  border:none;
+  border-radius:50px;
+  font-size:14px;
+  color:white;
+  cursor:pointer;
+}
+
+.fab-order{
+  background:#4CAF50;
+}
+
+.fab-tanker{
+  background:#2196F3;
+}
+
+/* Desktop par hide */
+
+@media (min-width:768px){
+  .mobile-fab{
+    display:none;
+  }
+}
 
 /* 📱 Floating Action Buttons */
 .mobile-fab{
@@ -178,15 +212,15 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
     max-height:75vh;
     overflow:auto;
     z-index:3000;
-    display:none;
+    display:none !important;
   }
 
   body.show-order #addOrderCard{
-    display:block;
+    display:block !important;
   }
 
   body.show-tanker #tankerCard{
-    display:block;
+    display:block !important;
   }
 
 }
@@ -588,11 +622,6 @@ margin-left:4px;
 }
 
 
-/* Default hidden */
-#addOrderCard,
-#tankerCard{
-  display:none;
-}
 
 /* When open */
 body.show-order #addOrderCard{
@@ -2037,7 +2066,7 @@ async function initialCloudCheck(){
 
 <!-- 📱 Mobile Floating Buttons -->
 
-<div class="mobile-fab" style="display:none;">
+<div class="mobile-fab">
   <button class="fab-order" onclick="toggleOrderForm()">➕ Order</button>
   <button class="fab-tanker" onclick="toggleTankerForm()">🚚 Tanker</button>
 </div>
