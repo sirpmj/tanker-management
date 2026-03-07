@@ -907,10 +907,8 @@ document.getElementById('tankerCapacity').value='';
 document.getElementById('tankerType').value='';
 document.getElementById('transportName').value='';
 showToast("Tanker Added Successfully 🚛");
-// close popup
-document.getElementById("tankerCard").classList.remove("active");
+closeForms();
 }
-
 
 function toggleOrderForm(){
 
@@ -930,6 +928,11 @@ function toggleTankerForm(){
   tanker.classList.toggle('active');
   order.classList.remove('active');
 
+}
+
+function closeForms(){
+  document.getElementById("addOrderCard").classList.remove("active");
+  document.getElementById("tankerCard").classList.remove("active");
 }
 
 function showTankers() {
@@ -1298,8 +1301,7 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 showToast("Order Added Successfully 🚚");
-// close popup
-document.getElementById("addOrderCard").classList.remove("active");
+closeForms();
 }
 
 
@@ -1715,6 +1717,25 @@ async function loadUserData(uid) {
 
 }
 
+document.addEventListener("click", function(e){
+
+const order = document.getElementById("addOrderCard");
+const tanker = document.getElementById("tankerCard");
+const fab = document.querySelector(".mobile-fab");
+
+if(order.classList.contains("active") && 
+   !order.contains(e.target) && 
+   (!fab || !fab.contains(e.target))){
+  order.classList.remove("active");
+}
+
+if(tanker.classList.contains("active") && 
+   !tanker.contains(e.target) && 
+   (!fab || !fab.contains(e.target))){
+  tanker.classList.remove("active");
+}
+
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date();
@@ -1727,8 +1748,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const orderDateInput = document.getElementById('orderDate');
   const scheduleDateInput = document.getElementById('scheduleDate');
 
-  if (orderDateInput) orderDateInput.value = formatted;
-  if (scheduleDateInput) scheduleDateInput.value = formatted;
+if (orderDateInput && !orderDateInput.value) {
+  orderDateInput.value = formatted;
+}
+
+if (scheduleDateInput && !scheduleDateInput.value) {
+  scheduleDateInput.value = formatted;
+}
 });
 
 document.getElementById("addOrderCard").classList.remove("active");
@@ -1996,6 +2022,8 @@ async function initialCloudCheck(){
 <div class="mobile-fab" style="display:none;">
   <button class="fab-order" onclick="toggleOrderForm()">➕ Order</button>
   <button class="fab-tanker" onclick="toggleTankerForm()">🚚 Tanker</button>
+
+
 </div>
 <script>
 if ('serviceWorker' in navigator) {
