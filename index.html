@@ -903,9 +903,12 @@ function addTanker(){
   updateDashboard();
 
   document.getElementById('tankerNo').value = '';
-  document.getElementById('tankerCapacity').value = '';
-  document.getElementById('tankerType').value = '';
-  document.getElementById('transportName').value = '';
+document.getElementById('tankerCapacity').value = '';
+document.getElementById('tankerType').value = '';
+
+// ✅ FORM CLOSE
+document.getElementById('tankerCard').classList.remove('active');
+
 }
 
 
@@ -1297,10 +1300,12 @@ save();
 showOrders();
 updateDashboard();
 
-// Reset only required fields
 document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
+
+// ✅ FORM CLOSE
+document.getElementById('addOrderCard').classList.remove('active');
 
 }
 
