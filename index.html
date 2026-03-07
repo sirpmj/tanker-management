@@ -903,9 +903,7 @@ document.getElementById('tankerCapacity').value='';
 document.getElementById('transportName').value='';
 document.getElementById('tankerType').value='';
 
-let tankerCard = document.getElementById('tankerCard');
-tankerCard.classList.remove('active');
-tankerCard.style.display = 'none';   // 🔥 important
+toggleTankerForm(); // 🔥 THIS FIX
 }
 
 function toggleOrderForm(){
@@ -1311,9 +1309,7 @@ document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-let orderCard = document.getElementById('addOrderCard');
-orderCard.classList.remove('active');
-orderCard.style.display='none';   // 🔥 important
+toggleOrderForm(); // 🔥 THIS FIX
 }
 
 function formatDisplayDate(isoDate) {
