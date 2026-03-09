@@ -190,16 +190,6 @@ ul#partyListDisplay li{display:flex;justify-content:space-between;align-items:ce
 }
 
 
-#addOrderCard,
-#tankerCard{
-  display:none;
-}
-
-#addOrderCard.active,
-#tankerCard.active{
-  display:block;
-}
-
 /* --- Header filter styles (paste into existing <style>) --- */
 th { position: relative; }
 .filter-input {
@@ -916,29 +906,33 @@ function addTanker(){
   document.getElementById('tankerCapacity').value = '';
   document.getElementById('tankerType').value = '';
   document.getElementById('transportName').value = '';
-// Close form properly
-const tankerCard = document.getElementById('tankerCard');
-if(tankerCard){
-  tankerCard.classList.remove('active');
-  tankerCard.style.display = "none";
 }
-}
+
 
 function toggleOrderForm(){
   const order = document.getElementById('addOrderCard');
   const tanker = document.getElementById('tankerCard');
 
-  order.classList.toggle('active');
-  tanker.classList.remove('active');
+  if(order.classList.contains('active')){
+    order.classList.remove('active');
+  } else {
+    order.classList.add('active');
+    tanker.classList.remove('active');
+    order.scrollIntoView({behavior:'smooth'});
+  }
 }
-
 
 function toggleTankerForm(){
   const tanker = document.getElementById('tankerCard');
   const order = document.getElementById('addOrderCard');
 
-  tanker.classList.toggle('active');
-  order.classList.remove('active');
+  if(tanker.classList.contains('active')){
+    tanker.classList.remove('active');
+  } else {
+    tanker.classList.add('active');
+    order.classList.remove('active');
+    tanker.scrollIntoView({behavior:'smooth'});
+  }
 }
 
 
@@ -1307,13 +1301,9 @@ updateDashboard();
 document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
-// Close form properly
-const orderCard = document.getElementById('addOrderCard');
-if(orderCard){
-  orderCard.classList.remove('active');
-  orderCard.style.display = "none";
+
 }
-}
+
 
 
 
@@ -1931,24 +1921,6 @@ onAuthStateChanged(auth, async (user) => {
   fab.style.display = "flex";
 }
 
-
-document.addEventListener("click",function(e){
-
-const order = document.getElementById("addOrderCard");
-const tanker = document.getElementById("tankerCard");
-
-if(
-!order.contains(e.target) &&
-!tanker.contains(e.target) &&
-!e.target.closest(".mobile-fab")
-){
-order.classList.remove("active");
-tanker.classList.remove("active");
-}
-
-});
-
-
   // Load user profile
   const userSnap = await getDoc(doc(db, "users", user.uid));
   if(userSnap.exists()){
@@ -2022,7 +1994,7 @@ async function initialCloudCheck(){
 
 <!-- 📱 Mobile Floating Buttons -->
 
-<div class="mobile-fab">
+<div class="mobile-fab" style="display:none;">
   <button class="fab-order" onclick="toggleOrderForm()">➕ Order</button>
   <button class="fab-tanker" onclick="toggleTankerForm()">🚚 Tanker</button>
 </div>
