@@ -1278,38 +1278,40 @@ let qty = document.getElementById('orderQty').value;
 let rate = document.getElementById('orderRate').value;
 
 if(!d || !sd || !p || !item || !qty){
-  alert('Please fill all required fields');
-  return;
+alert('Please fill all required fields');
+return;
 }
 
 orders.push({
-  date:d,
-  scheduleDate:sd,
-  party:p,
-  item:item,
-  orderQty:Number(qty),
-  rate: rate ? Number(rate) : 0,
-  tanker:null,
-  status:'Pending',
-  notes:''
+date: d,
+scheduleDate: sd,
+party: p,
+item: item,
+orderQty: Number(qty),
+rate: rate ? Number(rate) : 0,
+tanker: null,
+status: 'Pending',
+notes: ''
 });
 
 save();
 showOrders();
 updateDashboard();
 
-/* ---- Reset only some fields ---- */
-// Reset fields
-document.getElementById('orderParty').value='';
-document.getElementById('orderQty').value='';
-document.getElementById('orderRate').value='';
 
-// Set current date again
-const today = new Date();
-const yyyy = today.getFullYear();
-const mm = String(today.getMonth() + 1).padStart(2, '0');
-const dd = String(today.getDate()).padStart(2, '0');
-const formatted = `${yyyy}-${mm}-${dd}`;
+// reset fields
+document.getElementById('orderParty').value = '';
+document.getElementById('orderQty').value = '';
+document.getElementById('orderRate').value = '';
+
+
+// set current date again
+let today = new Date();
+let yyyy = today.getFullYear();
+let mm = String(today.getMonth()+1).padStart(2,'0');
+let dd = String(today.getDate()).padStart(2,'0');
+
+let formatted = yyyy + "-" + mm + "-" + dd;
 
 document.getElementById('orderDate').value = formatted;
 document.getElementById('scheduleDate').value = formatted;
