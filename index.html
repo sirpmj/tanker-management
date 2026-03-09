@@ -1269,38 +1269,43 @@ function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[
 
 /* ---------- ORDERS ---------- */
 function addOrder(){
-let d=document.getElementById('orderDate').value;
-let sd=document.getElementById('scheduleDate').value;
-let p=document.getElementById('orderParty').value.trim();
-let item=document.getElementById('orderItem').value.trim();
-let qty=document.getElementById('orderQty').value;
-let rate=document.getElementById('orderRate').value;
 
-if(!d||!sd||!p||!item||!qty){
-alert('Please fill all required fields');
-return;
+let d = document.getElementById('orderDate').value;
+let sd = document.getElementById('scheduleDate').value;
+let p = document.getElementById('orderParty').value.trim();
+let item = document.getElementById('orderItem').value.trim();
+let qty = document.getElementById('orderQty').value;
+let rate = document.getElementById('orderRate').value;
+
+if(!d || !sd || !p || !item || !qty){
+  alert('Please fill all required fields');
+  return;
 }
 
 orders.push({
-date:d,
-scheduleDate:sd,
-party:p,
-item:item,
-orderQty:Number(qty),
-rate: rate ? Number(rate) : 0,
-tanker:null,
-status:'Pending',
-notes:''
+  date:d,
+  scheduleDate:sd,
+  party:p,
+  item:item,
+  orderQty:Number(qty),
+  rate: rate ? Number(rate) : 0,
+  tanker:null,
+  status:'Pending',
+  notes:''
 });
 
 save();
 showOrders();
 updateDashboard();
 
-// Reset only required fields
+/* ---- Reset only some fields ---- */
 document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
+
+/* ---- Keep dates same ---- */
+document.getElementById('orderDate').value = d;
+document.getElementById('scheduleDate').value = sd;
 
 }
 
