@@ -1269,52 +1269,38 @@ function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[
 
 /* ---------- ORDERS ---------- */
 function addOrder(){
+let d=document.getElementById('orderDate').value;
+let sd=document.getElementById('scheduleDate').value;
+let p=document.getElementById('orderParty').value.trim();
+let item=document.getElementById('orderItem').value.trim();
+let qty=document.getElementById('orderQty').value;
+let rate=document.getElementById('orderRate').value;
 
-let d = document.getElementById('orderDate').value;
-let sd = document.getElementById('scheduleDate').value;
-let p = document.getElementById('orderParty').value.trim();
-let item = document.getElementById('orderItem').value.trim();
-let qty = document.getElementById('orderQty').value;
-let rate = document.getElementById('orderRate').value;
-
-if(!d || !sd || !p || !item || !qty){
+if(!d||!sd||!p||!item||!qty){
 alert('Please fill all required fields');
 return;
 }
 
 orders.push({
-date: d,
-scheduleDate: sd,
-party: p,
-item: item,
-orderQty: Number(qty),
+date:d,
+scheduleDate:sd,
+party:p,
+item:item,
+orderQty:Number(qty),
 rate: rate ? Number(rate) : 0,
-tanker: null,
-status: 'Pending',
-notes: ''
+tanker:null,
+status:'Pending',
+notes:''
 });
 
 save();
 showOrders();
 updateDashboard();
 
-
-// reset fields
-document.getElementById('orderParty').value = '';
-document.getElementById('orderQty').value = '';
-document.getElementById('orderRate').value = '';
-
-
-// set current date again
-let today = new Date();
-let yyyy = today.getFullYear();
-let mm = String(today.getMonth()+1).padStart(2,'0');
-let dd = String(today.getDate()).padStart(2,'0');
-
-let formatted = yyyy + "-" + mm + "-" + dd;
-
-document.getElementById('orderDate').value = formatted;
-document.getElementById('scheduleDate').value = formatted;
+// Reset only required fields
+document.getElementById('orderParty').value='';
+document.getElementById('orderQty').value='';
+document.getElementById('orderRate').value='';
 
 }
 
