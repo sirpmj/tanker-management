@@ -586,24 +586,6 @@ margin-left:4px;
   }
 
 }
-
-
-/* Default hidden */
-#addOrderCard,
-#tankerCard{
-  display:none;
-}
-
-/* When open */
-body.show-order #addOrderCard{
-  display:block;
-}
-
-body.show-tanker #tankerCard{
-  display:block;
-}
-
-
 </style>
 </head>
 <body>
@@ -693,7 +675,7 @@ body.show-tanker #tankerCard{
      <div><label>Item</label><input type="text" id="orderItem" value="CSL"></div>
      <div><label>Order Qty</label><input type="number" id="orderQty"placeholder="Qty in Mt"></div>
 <div><label>Rate</label><input type="number" id="orderRate" placeholder="Rate in Mt"></div>
-     <div style="align-self:flex-end;"><button type="button" onclick="addOrder()">Add Order</button></div>
+     <div style="align-self:flex-end;"><button onclick="addOrder()">➕Order</button></div>
    </div>
 </div>
 <!-- Add Tanker -->
@@ -738,7 +720,7 @@ body.show-tanker #tankerCard{
 
     <!-- Add Tanker Button -->
     <div style="align-self:flex-end;">
-<button type="button" onclick="addTanker()">Add Tanker</button>
+      <button onclick="addTanker()">🚚Tanker</button>
     </div>
   </div>
 
@@ -890,58 +872,68 @@ function showToast(message,type="success"){
 
 /* ---------- TANKERS ---------- */
 function addTanker(){
+  const no = document.getElementById('tankerNo').value.trim();
+  const cap = Number(document.getElementById('tankerCapacity').value);
+  const type = document.getElementById('tankerType').value;
+  const transport = document.getElementById('transportName').value.trim(); // ✅ ADD THIS
 
-let tno=document.getElementById('tankerNo').value.trim();
-let cap=document.getElementById('tankerCapacity').value;
-let transport=document.getElementById('transportName').value.trim();
-let type=document.getElementById('tankerType').value;
+  if(!no || !cap || !type){
+    alert("Please enter Tanker No, Capacity and Type");
+    return;
+  }
 
-if(!tno || !cap){
-alert('Please fill required fields');
-return;
+  if(tankers.some(t => t.no === no)){
+    alert("Tanker already exists!");
+    return;
+  }
+
+  tankers.push({
+    no: no,
+    capacity: cap,
+    transport: transport,   // ✅ now correct
+    type: type,
+    status: "Empty",
+    assignedOrder: null,
+    active: true,
+    notes: ""
+  });
+
+  save();
+  showTankers();
+  updateDashboard();
+
+  document.getElementById('tankerNo').value = '';
+  document.getElementById('tankerCapacity').value = '';
+  document.getElementById('tankerType').value = '';
+  document.getElementById('transportName').value = '';
 }
-
-tankers.push({
-no:tno,
-capacity:Number(cap),
-transport:transport,
-type:type,
-status:'Empty',
-active:true,
-assignedOrder:null,
-notes:''
-});
-
-save();
-showTankers();
-updateDashboard();
-
-document.getElementById('tankerNo').value='';
-document.getElementById('tankerCapacity').value='';
-document.getElementById('transportName').value='';
-document.getElementById('tankerType').value='';
-
-closeForms();
-}
-
 
 
 function toggleOrderForm(){
-  document.body.classList.add("show-order");
-  document.body.classList.remove("show-tanker");
+  const order = document.getElementById('addOrderCard');
+  const tanker = document.getElementById('tankerCard');
+
+  if(order.classList.contains('active')){
+    order.classList.remove('active');
+  } else {
+    order.classList.add('active');
+    tanker.classList.remove('active');
+    order.scrollIntoView({behavior:'smooth'});
+  }
 }
 
 function toggleTankerForm(){
-  document.body.classList.add("show-tanker");
-  document.body.classList.remove("show-order");
+  const tanker = document.getElementById('tankerCard');
+  const order = document.getElementById('addOrderCard');
+
+  if(tanker.classList.contains('active')){
+    tanker.classList.remove('active');
+  } else {
+    tanker.classList.add('active');
+    order.classList.remove('active');
+    tanker.scrollIntoView({behavior:'smooth'});
+  }
 }
-
-function closeForms(){
-  document.body.classList.remove("show-order");
-  document.body.classList.remove("show-tanker");
-}
-
-
 
 
 function showTankers() {
@@ -1277,7 +1269,6 @@ function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[
 
 /* ---------- ORDERS ---------- */
 function addOrder(){
-
 let d=document.getElementById('orderDate').value;
 let sd=document.getElementById('scheduleDate').value;
 let p=document.getElementById('orderParty').value.trim();
@@ -1306,12 +1297,15 @@ save();
 showOrders();
 updateDashboard();
 
+// Reset only required fields
 document.getElementById('orderParty').value='';
 document.getElementById('orderQty').value='';
 document.getElementById('orderRate').value='';
 
-closeForms();
 }
+
+
+
 
 function formatDisplayDate(isoDate) {
   if (!isoDate) return '';
@@ -1585,16 +1579,10 @@ function filterTankers(status){
 }
 
 /* ---------- SAVE / BACKUP ---------- */
-function save(){
-
-  localStorage.setItem('orders',JSON.stringify(orders));
-  localStorage.setItem('tankers',JSON.stringify(tankers));
-  localStorage.setItem('parties',JSON.stringify(parties));
-
-  if(window.save){
-     window.save();   // Firebase auto sync
-  }
-
+function save(){ 
+  localStorage.setItem('orders',JSON.stringify(orders)); 
+  localStorage.setItem('tankers',JSON.stringify(tankers)); 
+  localStorage.setItem('parties',JSON.stringify(parties)); 
 }
 function downloadBackup(){
   let data = JSON.stringify({orders,tankers,parties});
@@ -1633,37 +1621,6 @@ async function restoreBackup(e){
 
       // 🔥 RESTORE KE BAAD FIREBASE MEIN SAVE
       if (window.save) await window.save();
-window.save = async function () {
-
-  if (!auth.currentUser) return;
-
-  const uid = auth.currentUser.uid;
-
-  await setDoc(doc(db, "tankerData", uid), {
-    orders: orders,
-    tankers: tankers,
-    parties: parties
-  });
-
-};
-
-
-onAuthStateChanged(auth, async (user) => {
-
-  if(user){
-
-    currentUser = user;
-
-    document.getElementById("loginSection").style.display="none";
-    document.querySelector(".container").style.display="block";
-
-    document.getElementById("welcomeUser").innerText = user.email;
-
-    await loadUserData(user.uid);
-
-  }
-
-});
 
       alert("Restore successful & Firebase updated");
 
