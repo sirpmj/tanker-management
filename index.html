@@ -717,6 +717,15 @@ margin-left:4px;
 </div>
 
 
+<div>
+  <label>Unload Facility</label>
+  <select id="pumpType">
+    <option value="">Select</option>
+    <option value="With Pump">With Pump</option>
+    <option value="W/O Pump">W/O Pump</option>
+  <option value="Air">Air Pressure</option>
+  </select>
+</div>
 
     <!-- Add Tanker Button -->
     <div style="align-self:flex-end;">
@@ -739,6 +748,7 @@ margin-left:4px;
   Transporter ⬍
 </th>
 <th>Capacity</th>
+<th>Unload</th>
 <th onclick="sortTankerByType()" style="cursor:pointer;">
   Type ⬍
 </th>
@@ -875,6 +885,7 @@ function addTanker(){
   const no = document.getElementById('tankerNo').value.trim();
   const cap = Number(document.getElementById('tankerCapacity').value);
   const type = document.getElementById('tankerType').value;
+const pump = document.getElementById('pumpType').value;
   const transport = document.getElementById('transportName').value.trim(); // ✅ ADD THIS
 
   if(!no || !cap || !type){
@@ -892,7 +903,8 @@ function addTanker(){
     capacity: cap,
     transport: transport,   // ✅ now correct
     type: type,
-    status: "Empty",
+pump: "",   // 👈 MUST   
+status: "Empty",
     assignedOrder: null,
     active: true,
     notes: ""
@@ -954,8 +966,15 @@ function showTankers() {
 <td contenteditable onblur="updateTanker(${i},'transport',this.innerText.trim())">
   ${t.transport || ""}
 </td>
+
       <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
+
+<td contenteditable onblur="updatePump(${i}, this.innerText)">
+  ${t.pump || ""}
+</td>
 <td>
+
+
   <span class="type-badge type-${t.type}">
     ${escapeHtml(t.type || '')}
   </span>
@@ -983,6 +1002,11 @@ function showTankers() {
     tb.appendChild(row);
   });
   filterTankers(currentTankerFilter);
+}
+
+function updatePump(index, value){
+  tankers[index].pump = value.trim();
+  localStorage.setItem("tankers", JSON.stringify(tankers));
 }
 
 function updateTanker(i, field, value) {
