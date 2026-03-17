@@ -814,7 +814,7 @@ margin-left:4px;
   <span>🎉Completed Orders</span>
   <button onclick="autoDeleteCompletedOrders()" 
           style="padding:4px 10px; font-size:12px;">
-    🧹 Clean 🎉Completed Orders
+🧹 Auto Clean
   </button>
 </h3>  <div style="max-height:300px;overflow:auto;">
     <table id="completedOrderTable">
@@ -1676,8 +1676,7 @@ function displayToIso(text){
 
 function autoDeleteCompletedOrders() {
   const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-
+const oneDay = 3 * 24 * 60 * 60 * 1000; // 3 days
   let deletedOrders = [];
 
   orders = orders.filter(o => {
