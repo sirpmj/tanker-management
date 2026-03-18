@@ -723,7 +723,7 @@ margin-left:4px;
     <option value="">Select</option>
     <option value="With Pump">With Pump</option>
     <option value="W/O Pump">W/O Pump</option>
-  <option value="Air">Air Pressure</option>
+  <option value="Air">Air</option>
   </select>
 </div>
 
@@ -1486,11 +1486,15 @@ if (f === 'tanker') {
     let selectedTanker = tankers.find(t => t.no === v);
 
     // 🚨 CAPACITY VALIDATION BEFORE ASSIGN
-    if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
-        alert("Tanker capacity is less than order quantity");
-        showOrders();
-        return;
-    }
+ if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
+    alert(`❌ Tanker capacity (${selectedTanker.capacity} MT) is less than Order Qty (${orders[i].orderQty} MT)`);
+
+    // 🔥 RESET selection (important)
+    orders[i].tanker = oldTanker || null;
+
+    showOrders();
+    return;
+}
 
     // Reset old tanker
     if (oldTanker && oldTanker !== v) {
