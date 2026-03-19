@@ -912,17 +912,17 @@ const pump = document.getElementById('pumpType').value;
     return;
   }
 
-  tankers.push({
-    no: no,
-    capacity: cap,
-    transport: transport,   // ✅ now correct
-    type: type,
-pump: "",   // 👈 MUST   
-status: "Empty",
-    assignedOrder: null,
-    active: true,
-    notes: ""
-  });
+tankers.push({
+  no: no,
+  capacity: cap,
+  transport: transport,
+  type: type,
+  pump: pump,   // ✅ FIXED
+  status: "Empty",
+  assignedOrder: null,
+  active: true,
+  notes: ""
+});
 
   save();
   showTankers();
@@ -977,6 +977,9 @@ function showTankers() {
       <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
 
 <td contenteditable onblur="updatePump(${i}, this.innerText)">
+
+
+
   ${t.pump || ""}
 </td>
 <td>
@@ -1379,6 +1382,9 @@ function showOrders() {
       }
     });
 
+
+
+
     let tankerCell = "";
     if(o.status==="Complete"){
       tankerCell = `<td class="tanker-locked">${o._completedTanker||""}</td>`;
@@ -1688,38 +1694,40 @@ function displayToIso(text){
 
 
 function autoDeleteCompletedOrders() {
+
   const now = Date.now();
-const oneDay = 3 * 24 * 60 * 60 * 1000; // 3 days
+const threeDays = 3 * 24 * 60 * 60 * 1000;
+
   let deletedOrders = [];
 
   orders = orders.filter(o => {
 
     if (o.status === "Complete") {
 
-      let completeTime = o._completeTime;
+      if (o._completeTime) {
 
-      // Old data support
-      if (!completeTime) {
-        if (o.scheduleDate) {
-          completeTime = new Date(o.scheduleDate).getTime();
-        } else if (o.date) {
-          completeTime = new Date(o.date).getTime();
+        if (now - o._completeTime > threeDays) {
+          deletedOrders.push(o);
+          return false;
         }
-      }
 
-      if (completeTime && (now - completeTime > oneDay)) {
-        deletedOrders.push(o);   // backup
-        return false;
+      } else if (o.scheduleDate) {
+
+        let scheduleTime = new Date(o.scheduleDate + "T00:00:00").getTime();
+
+        if (!isNaN(scheduleTime) && now - scheduleTime > threeDays) {
+          deletedOrders.push(o);
+          return false;
+        }
       }
     }
 
     return true;
   });
 
-  // 🧠 Backup save (important)
   if (deletedOrders.length > 0) {
+    console.log("🧹 Deleted:", deletedOrders.length);
     localStorage.setItem("deletedCompletedOrders", JSON.stringify(deletedOrders));
-    console.log("Auto deleted & backed up:", deletedOrders.length);
   }
 
   save();
@@ -1727,15 +1735,11 @@ const oneDay = 3 * 24 * 60 * 60 * 1000; // 3 days
   updateDashboard();
 }
 
-
-
-
-
 /* ---------- UTILS ---------- */
 function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ---------- INIT ---------- */
-refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); autoDeleteCompletedOrders();
+refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
 
 autoDeleteCompletedOrders();
 setInterval(autoDeleteCompletedOrders, 60000); // every 1 min
@@ -2021,6 +2025,7 @@ onAuthStateChanged(auth, async (user) => {
   showOrders();
   showTankers();
   updateDashboard();
+autoDeleteCompletedOrders();
 
 });
 
