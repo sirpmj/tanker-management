@@ -1619,11 +1619,47 @@ function filterTankers(status){
   });
 }
 
+
+
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+const auth = getAuth();
+let currentUser = null;
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+  }
+});
+
+
+
+
+
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+
+const db = getFirestore();
+
+async function saveToFirebase(user) {
+  await setDoc(doc(db, "tankerData", user.uid), {
+    orders,
+    tankers,
+    parties,
+    updatedAt: Date.now()
+  });
+}
+
+window.saveToFirebase = saveToFirebase;
+
 /* ---------- SAVE / BACKUP ---------- */
-function save(){ 
-  localStorage.setItem('orders',JSON.stringify(orders)); 
-  localStorage.setItem('tankers',JSON.stringify(tankers)); 
-  localStorage.setItem('parties',JSON.stringify(parties)); 
+function save() {
+  localStorage.setItem('orders', JSON.stringify(orders));
+  localStorage.setItem('tankers', JSON.stringify(tankers));
+  localStorage.setItem('parties', JSON.stringify(parties));
+
+  if(currentUser){
+    saveToFirebase(currentUser);
+  }
 }
 function downloadBackup(){
   let data = JSON.stringify({orders,tankers,parties});
@@ -1661,18 +1697,22 @@ async function restoreBackup(e){
       updateDashboard();
 
       // 🔥 RESTORE KE BAAD FIREBASE MEIN SAVE
-      if (window.save) await window.save();
+      try {
+  if (!currentUser) {
+    alert("User not logged in");
+    return;
+  }
 
-      alert("Restore successful & Firebase updated");
+  await saveToFirebase(currentUser);
 
-    }catch(err){
-      alert("Invalid backup file");
-    }
+  alert("Restore successful & Firebase updated");
 
-  };
-
-  reader.readAsText(file);
+} catch (err) {
+  console.error("Firebase save error:", err);
+  alert("Something went wrong");
 }
+
+
 /* ---------- DATE HELPERS ---------- */
 function isoToDisplay(iso){
   if(!iso) return "";
@@ -1813,6 +1853,38 @@ async function loadAllUsersData() {
 
 
 }
+
+// Firebase App
+import { initializeApp } from "firebase/app";
+
+// Firebase Database
+import { getDatabase, ref, set } from "firebase/database";
+
+// Optional Analytics
+import { getAnalytics } from "firebase/analytics";
+
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDnH5ttpi5d6479Y1pxbNhwBD4euctetk",
+  authDomain: "tanker-management-9d24c.firebaseapp.com",
+  databaseURL: "https://tanker-management-9d24c-default-rtdb.firebaseio.com",
+  projectId: "tanker-management-9d24c",
+  storageBucket: "tanker-management-9d24c.appspot.com", // ⚠️ fix
+  messagingSenderId: "779317083237",
+  appId: "1:779317083237:web:bde9c5d46530efb9ddda8c",
+  measurementId: "G-R13L056FNN"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+// Database
+const db = getDatabase(app);
+
+
+
+
 
 
 const firebaseConfig = {
