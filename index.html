@@ -1849,7 +1849,7 @@ function escapeHtml(text){ if(text===null||text===undefined) return ''; return S
 /* ---------- INIT ---------- */
 refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
 
-autoDeleteCompletedOrders();
+//autoDeleteCompletedOrders()
 
 
 /* ---------- FAB DRAG (MOBILE) ---------- */
@@ -2116,7 +2116,7 @@ onAuthStateChanged(auth, async (user) => {
   showOrders();
   showTankers();
   updateDashboard();
-autoDeleteCompletedOrders();
+//autoDeleteCompletedOrders();
 
 if(user){
     showFirstTimePopup();   // 👈 ADD HERE
