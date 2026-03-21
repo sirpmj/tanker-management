@@ -1809,39 +1809,40 @@ function autoDeleteCompletedOrders() {
 
     if (o.status === "Complete") {
 
-      let deleteTime = null;
-
-      // ✅ Prefer complete time
+      // ✅ Use completeTime (accurate)
       if (o._completeTime) {
-        deleteTime = o._completeTime;
-      } 
-      // 🔁 Fallback safe date parsing
-      else if (o.scheduleDate) {
-        const parsed = new Date(o.scheduleDate);
-        if (!isNaN(parsed.getTime())) {
-          deleteTime = parsed.getTime();
+
+        if (now - o._completeTime > oneDay) {
+          deletedOrders.push(o);
+          return false;
         }
+
       }
 
-      // 🔥 Final check
-      if (deleteTime && (now - deleteTime > oneDay)) {
-        deletedOrders.push(o);
-        return false;
+      // 🔁 Fallback (if completeTime missing)
+      else if (o.scheduleDate) {
+
+        let scheduleTime = new Date(o.scheduleDate).getTime();
+
+        if (now - scheduleTime > oneDay) {
+          deletedOrders.push(o);
+          return false;
+        }
       }
     }
 
     return true;
   });
 
-  // 🔥 USER ALERT (important)
   if (deletedOrders.length > 0) {
-    showToast(`🧹 ${deletedOrders.length} completed orders auto deleted`);
+    console.log("🧹 Deleted:", deletedOrders.length);
   }
 
   save();
   showOrders();
   updateDashboard();
 }
+
 /* ---------- UTILS ---------- */
 function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -2100,43 +2101,27 @@ onAuthStateChanged(auth, async (user) => {
     welcomeUser.innerText = "👤 " + userSnap.data().name;
   }
 
+  // Load user tanker data
   const dataSnap = await getDoc(doc(db, "tankerData", user.uid));
-
-if(dataSnap.exists()){
-  const data = dataSnap.data();
-
-  // 🔥 Only overwrite if Firebase has data
-  if (data.orders && data.orders.length > 0) {
-    orders = data.orders;
+  if(dataSnap.exists()){
+    const data = dataSnap.data();
+    orders = data.orders || [];
+    tankers = data.tankers || [];
+    parties = data.parties || [];
+  } else {
+    orders = [];
+    tankers = [];
+    parties = [];
   }
-
-  if (data.tankers && data.tankers.length > 0) {
-    tankers = data.tankers;
-  }
-
-  if (data.parties && data.parties.length > 0) {
-    parties = data.parties;
-  }
-
-} else {
-  // 🔥 First time user → upload local data to Firebase
-  await setDoc(doc(db, "tankerData", user.uid), {
-    orders,
-    tankers,
-    parties,
-    updatedAt: Date.now()
-  });
-}
-
-showOrders();
-showTankers();
-updateDashboard();
-
+  showOrders();
+  showTankers();
+  updateDashboard();
 autoDeleteCompletedOrders();
 
 if(user){
-  showFirstTimePopup();
-}
+    showFirstTimePopup();   // 👈 ADD HERE
+  }
+});
 
 /* ---------------- OVERRIDE SAVE ---------------- */
 window.save = async function(){
