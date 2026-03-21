@@ -721,13 +721,9 @@ margin-left:4px;
   <label>Unload Facility</label>
   <select id="pumpType">
     <option value="">Select</option>
-    <option value="With Pump">➕Pump</option>
-    <option value="W/O Pump">❌Pump</option>
-  <option value="With Air">➕Air</option>
-  <option value="W/O Air">❌Air</option>
-  <option value="No Unload Facility">🚫</option>
-
-
+    <option value="With Pump">With Pump</option>
+    <option value="W/O Pump">W/O Pump</option>
+  <option value="Air">Air Pressure</option>
   </select>
 </div>
 
@@ -819,7 +815,7 @@ margin-left:4px;
   <span>🎉Completed Orders</span>
   
   <span style="font-size:12px; color:green;">
-    Auto Clean: ON (1 Days)
+    Auto Clean: ON (3 Days)
   </span>
   
  </h3>
@@ -912,17 +908,17 @@ const pump = document.getElementById('pumpType').value;
     return;
   }
 
-tankers.push({
-  no: no,
-  capacity: cap,
-  transport: transport,
-  type: type,
-  pump: pump,   // ✅ FIXED
-  status: "Empty",
-  assignedOrder: null,
-  active: true,
-  notes: ""
-});
+  tankers.push({
+    no: no,
+    capacity: cap,
+    transport: transport,   // ✅ now correct
+    type: type,
+pump: "",   // 👈 MUST   
+status: "Empty",
+    assignedOrder: null,
+    active: true,
+    notes: ""
+  });
 
   save();
   showTankers();
@@ -977,9 +973,6 @@ function showTankers() {
       <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
 
 <td contenteditable onblur="updatePump(${i}, this.innerText)">
-
-
-
   ${t.pump || ""}
 </td>
 <td>
@@ -1382,9 +1375,6 @@ function showOrders() {
       }
     });
 
-
-
-
     let tankerCell = "";
     if(o.status==="Complete"){
       tankerCell = `<td class="tanker-locked">${o._completedTanker||""}</td>`;
@@ -1496,15 +1486,11 @@ if (f === 'tanker') {
     let selectedTanker = tankers.find(t => t.no === v);
 
     // 🚨 CAPACITY VALIDATION BEFORE ASSIGN
- if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
-    alert(`❌ Tanker capacity (${selectedTanker.capacity} MT) is less than Order Qty (${orders[i].orderQty} MT)`);
-
-    // 🔥 RESET selection (important)
-    orders[i].tanker = oldTanker || null;
-
-    showOrders();
-    return;
-}
+    if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
+        alert("Tanker capacity is less than order quantity");
+        showOrders();
+        return;
+    }
 
     // Reset old tanker
     if (oldTanker && oldTanker !== v) {
@@ -1694,44 +1680,38 @@ function displayToIso(text){
 
 
 function autoDeleteCompletedOrders() {
-
-  const today = new Date();
-  today.setHours(0,0,0,0); // today 00:00
-
+  const now = Date.now();
+const oneDay = 3 * 24 * 60 * 60 * 1000; // 3 days
   let deletedOrders = [];
 
   orders = orders.filter(o => {
 
     if (o.status === "Complete") {
 
-      if (o._completeTime) {
+      let completeTime = o._completeTime;
 
-        let completeDate = new Date(o._completeTime);
-        completeDate.setHours(0,0,0,0); // remove time
-
-        // 🔥 Agar complete date < today → delete
-        if (completeDate < today) {
-          deletedOrders.push(o);
-          return false;
+      // Old data support
+      if (!completeTime) {
+        if (o.scheduleDate) {
+          completeTime = new Date(o.scheduleDate).getTime();
+        } else if (o.date) {
+          completeTime = new Date(o.date).getTime();
         }
+      }
 
-      } else if (o.scheduleDate) {
-
-        let scheduleDate = new Date(o.scheduleDate);
-        scheduleDate.setHours(0,0,0,0);
-
-        if (scheduleDate < today) {
-          deletedOrders.push(o);
-          return false;
-        }
+      if (completeTime && (now - completeTime > oneDay)) {
+        deletedOrders.push(o);   // backup
+        return false;
       }
     }
 
     return true;
   });
 
+  // 🧠 Backup save (important)
   if (deletedOrders.length > 0) {
-    console.log("🧹 Deleted:", deletedOrders.length);
+    localStorage.setItem("deletedCompletedOrders", JSON.stringify(deletedOrders));
+    console.log("Auto deleted & backed up:", deletedOrders.length);
   }
 
   save();
@@ -1739,13 +1719,18 @@ function autoDeleteCompletedOrders() {
   updateDashboard();
 }
 
+
+
+
+
 /* ---------- UTILS ---------- */
 function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ---------- INIT ---------- */
-refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
+refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); autoDeleteCompletedOrders();
 
 autoDeleteCompletedOrders();
+setInterval(autoDeleteCompletedOrders, 60000); // every 1 min
 
 
 /* ---------- FAB DRAG (MOBILE) ---------- */
@@ -1922,7 +1907,7 @@ if (password.length < 6) {
       createdAt: Date.now()
     });
 
-    showToast("Sign Up Successful ✅");
+    showToast("Login Successful ✅");
 
   } 
 catch (err) {
@@ -2028,7 +2013,6 @@ onAuthStateChanged(auth, async (user) => {
   showOrders();
   showTankers();
   updateDashboard();
-autoDeleteCompletedOrders();
 
 });
 
