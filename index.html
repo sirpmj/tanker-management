@@ -879,6 +879,7 @@ function deleteParty(i){
 }
 
 
+
 function showToast(message,type="success"){
   const toast = document.getElementById("toast");
   toast.innerText = message;
@@ -892,6 +893,21 @@ function showToast(message,type="success"){
   setTimeout(()=>{
     toast.classList.remove("show");
   },3000);
+}
+
+
+
+function showFirstTimePopup() {
+
+  const lastShown = localStorage.getItem("popupTime");
+  const now = Date.now();
+
+  if (!lastShown || (now - lastShown) > 24*60*60*1000) {
+
+    showToast("🎉 Welcome!\n📲 Install this app for better experience.\n👉 Click menu (⋮) → Add to Home Screen");
+
+    localStorage.setItem("popupTime", now);
+  }
 }
 
 /* ---------- TANKERS ---------- */
@@ -1695,8 +1711,8 @@ function displayToIso(text){
 
 function autoDeleteCompletedOrders() {
 
-  const today = new Date();
-  today.setHours(0,0,0,0); // today 00:00
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
 
   let deletedOrders = [];
 
@@ -1704,23 +1720,22 @@ function autoDeleteCompletedOrders() {
 
     if (o.status === "Complete") {
 
+      // ✅ Use completeTime (accurate)
       if (o._completeTime) {
 
-        let completeDate = new Date(o._completeTime);
-        completeDate.setHours(0,0,0,0); // remove time
-
-        // 🔥 Agar complete date < today → delete
-        if (completeDate < today) {
+        if (now - o._completeTime > oneDay) {
           deletedOrders.push(o);
           return false;
         }
 
-      } else if (o.scheduleDate) {
+      }
 
-        let scheduleDate = new Date(o.scheduleDate);
-        scheduleDate.setHours(0,0,0,0);
+      // 🔁 Fallback (if completeTime missing)
+      else if (o.scheduleDate) {
 
-        if (scheduleDate < today) {
+        let scheduleTime = new Date(o.scheduleDate).getTime();
+
+        if (now - scheduleTime > oneDay) {
           deletedOrders.push(o);
           return false;
         }
@@ -1746,7 +1761,6 @@ function escapeHtml(text){ if(text===null||text===undefined) return ''; return S
 refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
 
 autoDeleteCompletedOrders();
-setInterval(autoDeleteCompletedOrders, 60000); // every 1 min
 
 
 /* ---------- FAB DRAG (MOBILE) ---------- */
@@ -1789,21 +1803,6 @@ window.addEventListener('load', function(){
 
 });
 
-async function loadUserData(uid) {
-
-  const snap = await getDoc(doc(db, "tankerData", uid));
-
-  if (snap.exists()) {
-    const data = snap.data();
-    orders = data.orders || [];
-    tankers = data.tankers || [];
-    parties = data.parties || [];
-    showOrders();
-    showTankers();
-    updateDashboard();
-  }
-
-}
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1923,7 +1922,7 @@ if (password.length < 6) {
       createdAt: Date.now()
     });
 
-    showToast("Login Successful ✅");
+    showToast("Sign Up Successful ✅");
 
   } 
 catch (err) {
@@ -2026,6 +2025,7 @@ onAuthStateChanged(auth, async (user) => {
     parties = [];
   }
 
+showFirstTimePopup();
   showOrders();
   showTankers();
   updateDashboard();
@@ -2112,7 +2112,10 @@ if ('serviceWorker' in navigator) {
     .then(() => console.log("Service Worker Registered"));
 }
 </script>
+
+
 <div id="toast" class="toast"></div>
+
 
 </body>
 </html>
