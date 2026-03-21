@@ -841,54 +841,6 @@ margin-left:4px;
 
 </div>
 
-
-
-<div id="installPopup" style="
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.5);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-">
-
-  <div style="
-    background:#fff;
-    padding:20px;
-    border-radius:12px;
-    width:90%;
-    max-width:320px;
-    text-align:center;
-    box-shadow:0 10px 25px rgba(0,0,0,0.3);
-  ">
-
-    <h3>🎉 Welcome</h3>
-
-    <p style="font-size:14px; margin:10px 0;">
-      📲 Install this app for better experience
-    </p>
-
-    <button id="installBtn" style="
-      background:#4e73df;
-      color:#fff;
-      padding:8px 14px;
-      border:none;
-      border-radius:6px;
-      margin-right:6px;
-    ">Install</button>
-
-    <button onclick="closeInstallPopup()" style="
-      background:#ccc;
-      padding:8px 14px;
-      border:none;
-      border-radius:6px;
-    ">Later</button>
-
-  </div>
-</div>
-
-
 <!-- Original app script (localStorage) -->
 <script>
 
@@ -927,7 +879,6 @@ function deleteParty(i){
 }
 
 
-
 function showToast(message,type="success"){
   const toast = document.getElementById("toast");
   toast.innerText = message;
@@ -941,62 +892,6 @@ function showToast(message,type="success"){
   setTimeout(()=>{
     toast.classList.remove("show");
   },3000);
-}
-
-
-
-function showFirstTimePopup() {
-
-  const lastShown = localStorage.getItem("popupTime");
-  const now = Date.now();
-
-  // 🔥 Show only if 24 hrs passed
-  if (!lastShown || (now - lastShown) > 24*60*60*1000) {
-
-    // 👇 popup show
-    document.getElementById("installPopup").style.display = "flex";
-
-    localStorage.setItem("popupTime", now);
-  }
-}
-
-
-
-
-let deferredPrompt = null;
-
-// Install event capture
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-});
-
-// Install button click
-document.addEventListener("click", async (e) => {
-
-  if (e.target.id === "installBtn") {
-
-    if (!deferredPrompt) {
-      alert("Install option not available yet");
-      return;
-    }
-
-    deferredPrompt.prompt();
-
-    const { outcome } = await deferredPrompt.userChoice;
-
-    console.log("Install result:", outcome);
-
-    deferredPrompt = null;
-
-    closeInstallPopup();
-  }
-
-});
-
-// Close popup
-function closeInstallPopup(){
-  document.getElementById("installPopup").style.display = "none";
 }
 
 /* ---------- TANKERS ---------- */
@@ -1798,50 +1693,6 @@ function displayToIso(text){
 }
 
 
-function autoDeleteCompletedOrders() {
-
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-
-  let deletedOrders = [];
-
-  orders = orders.filter(o => {
-
-    if (o.status === "Complete") {
-
-      // ✅ Use completeTime (accurate)
-      if (o._completeTime) {
-
-        if (now - o._completeTime > oneDay) {
-          deletedOrders.push(o);
-          return false;
-        }
-
-      }
-
-      // 🔁 Fallback (if completeTime missing)
-      else if (o.scheduleDate) {
-
-        let scheduleTime = new Date(o.scheduleDate).getTime();
-
-        if (now - scheduleTime > oneDay) {
-          deletedOrders.push(o);
-          return false;
-        }
-      }
-    }
-
-    return true;
-  });
-
-  if (deletedOrders.length > 0) {
-    console.log("🧹 Deleted:", deletedOrders.length);
-  }
-
-  save();
-  showOrders();
-  updateDashboard();
-}
 
 /* ---------- UTILS ---------- */
 function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1849,7 +1700,6 @@ function escapeHtml(text){ if(text===null||text===undefined) return ''; return S
 /* ---------- INIT ---------- */
 refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
 
-autoDeleteCompletedOrders();
 
 
 /* ---------- FAB DRAG (MOBILE) ---------- */
@@ -1892,6 +1742,21 @@ window.addEventListener('load', function(){
 
 });
 
+async function loadUserData(uid) {
+
+  const snap = await getDoc(doc(db, "tankerData", uid));
+
+  if (snap.exists()) {
+    const data = snap.data();
+    orders = data.orders || [];
+    tankers = data.tankers || [];
+    parties = data.parties || [];
+    showOrders();
+    showTankers();
+    updateDashboard();
+  }
+
+}
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2113,14 +1978,11 @@ onAuthStateChanged(auth, async (user) => {
     tankers = [];
     parties = [];
   }
+
   showOrders();
   showTankers();
   updateDashboard();
-autoDeleteCompletedOrders();
 
-if(user){
-    showFirstTimePopup();   // 👈 ADD HERE
-  }
 });
 
 /* ---------------- OVERRIDE SAVE ---------------- */
@@ -2202,10 +2064,7 @@ if ('serviceWorker' in navigator) {
     .then(() => console.log("Service Worker Registered"));
 }
 </script>
-
-
 <div id="toast" class="toast"></div>
-
 
 </body>
 </html>
