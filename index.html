@@ -1679,47 +1679,6 @@ function displayToIso(text){
 }
 
 
-function autoDeleteCompletedOrders() {
-  const now = Date.now();
-const oneDay = 3 * 24 * 60 * 60 * 1000; // 3 days
-  let deletedOrders = [];
-
-  orders = orders.filter(o => {
-
-    if (o.status === "Complete") {
-
-      let completeTime = o._completeTime;
-
-      // Old data support
-      if (!completeTime) {
-        if (o.scheduleDate) {
-          completeTime = new Date(o.scheduleDate).getTime();
-        } else if (o.date) {
-          completeTime = new Date(o.date).getTime();
-        }
-      }
-
-      if (completeTime && (now - completeTime > oneDay)) {
-        deletedOrders.push(o);   // backup
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  // 🧠 Backup save (important)
-  if (deletedOrders.length > 0) {
-    localStorage.setItem("deletedCompletedOrders", JSON.stringify(deletedOrders));
-    console.log("Auto deleted & backed up:", deletedOrders.length);
-  }
-
-  save();
-  showOrders();
-  updateDashboard();
-}
-
-
 
 
 
@@ -1727,10 +1686,8 @@ const oneDay = 3 * 24 * 60 * 60 * 1000; // 3 days
 function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ---------- INIT ---------- */
-refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); autoDeleteCompletedOrders();
+refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
 
-autoDeleteCompletedOrders();
-setInterval(autoDeleteCompletedOrders, 60000); // every 1 min
 
 
 /* ---------- FAB DRAG (MOBILE) ---------- */
