@@ -590,6 +590,9 @@ margin-left:4px;
 </head>
 <body>
 
+
+<div id="toast" class="toast"></div>
+
 <div id="loginSection">
 
 
@@ -854,7 +857,7 @@ let orders = JSON.parse(localStorage.getItem('orders')||'[]');
 let tankers = JSON.parse(localStorage.getItem('tankers')||'[]');
 let parties = JSON.parse(localStorage.getItem('parties')||'[]');
 let currentTankerFilter = 'active';
-let currentUser = null;
+
 
 /* ---------- PARTY ---------- */
 function refreshPartyDropdown(){
@@ -1621,24 +1624,22 @@ function filterTankers(status){
 
 
 
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
-const auth = getAuth();
-let currentUser = null;
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+
+// Firebase initialization (already done above in your main file)
+
+
+window.currentUser = null;
 
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    currentUser = user;
-  }
+  window.currentUser = user || null;
 });
 
 
 
-
-
-import { getFirestore, doc, setDoc } from "firebase/firestore";
-
-const db = getFirestore();
 
 async function saveToFirebase(user) {
   await setDoc(doc(db, "tankerData", user.uid), {
@@ -1652,14 +1653,20 @@ async function saveToFirebase(user) {
 window.saveToFirebase = saveToFirebase;
 
 /* ---------- SAVE / BACKUP ---------- */
+let saveTimeout;
+
 function save() {
   localStorage.setItem('orders', JSON.stringify(orders));
   localStorage.setItem('tankers', JSON.stringify(tankers));
   localStorage.setItem('parties', JSON.stringify(parties));
 
-  if(currentUser){
-    saveToFirebase(currentUser);
-  }
+  clearTimeout(saveTimeout);
+
+  saveTimeout = setTimeout(() => {
+    if (window.currentUser) {
+      saveToFirebase(window.currentUser);
+    }
+  }, 1000);
 }
 function downloadBackup(){
   let data = JSON.stringify({orders,tankers,parties});
@@ -1677,41 +1684,64 @@ function downloadBackup(){
   a.download = filename;
   a.click();
 }
-async function restoreBackup(e){
+async function restoreBackup(e) {
 
   let file = e.target.files[0];
+
+  if (!file) {
+    alert("Please select a file");
+    return;
+  }
+
   let reader = new FileReader();
 
-  reader.onload = async function(){
+  reader.onload = async function () {
 
-    try{
+    try {
 
       let d = JSON.parse(reader.result);
 
+      // Restore data
       orders = d.orders || [];
       tankers = d.tankers || [];
       parties = d.parties || [];
 
+      // Update UI
       showOrders();
       showTankers();
       updateDashboard();
 
-      // 🔥 RESTORE KE BAAD FIREBASE MEIN SAVE
+      // 🔥 Save to Firebase after restore
       try {
-  if (!currentUser) {
-    alert("User not logged in");
-    return;
-  }
 
-  await saveToFirebase(currentUser);
-
-  alert("Restore successful & Firebase updated");
-
-} catch (err) {
-  console.error("Firebase save error:", err);
-  alert("Something went wrong");
+       if (!window.currentUser || !window.currentUser.uid) {
+  alert("User not logged in");
+  return;
 }
 
+        await saveToFirebase(window.currentUser);
+
+        alert("✅ Restore successful & Firebase updated");
+
+      } catch (err) {
+        console.error("Firebase save error:", err);
+        alert("❌ Firebase save failed");
+
+      }
+
+    } catch (err) {
+      console.error("JSON parse error:", err);
+      alert("❌ Invalid backup file");
+    }
+  };
+
+  // File read error handling
+  reader.onerror = function () {
+    alert("❌ Error reading file");
+  };
+
+  reader.readAsText(file);
+}
 
 /* ---------- DATE HELPERS ---------- */
 function isoToDisplay(iso){
@@ -1735,7 +1765,13 @@ function displayToIso(text){
 
 
 /* ---------- UTILS ---------- */
-function escapeHtml(text){ if(text===null||text===undefined) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(text){
+  if(text===null||text===undefined) return '';
+  return String(text)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
 
 /* ---------- INIT ---------- */
 refreshPartyDropdown(); showOrders(); showTankers(); updateDashboard(); 
@@ -1833,13 +1869,37 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc
+  getDoc,
+  collection,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
 
-import { collection, getDocs } from 
-"https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
+// ✅ Firebase Config (ONLY ONCE)
+const firebaseConfig = {
+  apiKey: "AIzaSyDnH5ttpi5d6479Y1pxbNhwBD4euctetk",
+  authDomain: "tanker-management-9d24c.firebaseapp.com",
+  projectId: "tanker-management-9d24c",
+  storageBucket: "tanker-management-9d24c.appspot.com",
+  messagingSenderId: "779317083237",
+  appId: "1:779317083237:web:bde9c5d46530efb9ddda8c",
+  measurementId: "G-R13L056FNN"
+};
+
+// ✅ Initialize Firebase (ONLY ONCE)
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+// ✅ Services
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+
+// ============================
+// LOAD ALL USERS DATA
+// ============================
 async function loadAllUsersData() {
 
   const querySnapshot = await getDocs(collection(db, "tankerData"));
@@ -1850,62 +1910,26 @@ async function loadAllUsersData() {
     console.log("User ID:", docSnap.id);
     console.log(docSnap.data());
   });
-
-
 }
 
-// Firebase App
-import { initializeApp } from "firebase/app";
-
-// Firebase Database
-import { getDatabase, ref, set } from "firebase/database";
-
-// Optional Analytics
-import { getAnalytics } from "firebase/analytics";
-
-// Your Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDnH5ttpi5d6479Y1pxbNhwBD4euctetk",
-  authDomain: "tanker-management-9d24c.firebaseapp.com",
-  databaseURL: "https://tanker-management-9d24c-default-rtdb.firebaseio.com",
-  projectId: "tanker-management-9d24c",
-  storageBucket: "tanker-management-9d24c.appspot.com", // ⚠️ fix
-  messagingSenderId: "779317083237",
-  appId: "1:779317083237:web:bde9c5d46530efb9ddda8c",
-  measurementId: "G-R13L056FNN"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-// Database
-const db = getDatabase(app);
+window.loadAllUsersData = loadAllUsersData;
 
 
-
-
-
-
-const firebaseConfig = {
-   apiKey: "AIzaSyDnH5ttpi5dH6479Y1pxbNhwBD4euctetk",
-  authDomain: "tanker-management-9d24c.firebaseapp.com",
-  projectId: "tanker-management-9d24c",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-window.showLogin = function(){
+// ============================
+// LOGIN / SIGNUP UI TOGGLE
+// ============================
+window.showLogin = function () {
   document.getElementById("signupBox").style.display = "none";
   document.getElementById("loginBox").style.display = "block";
 }
 
-window.showSignup = function(){
+window.showSignup = function () {
   document.getElementById("signupBox").style.display = "block";
   document.getElementById("loginBox").style.display = "none";
 }
+
+
+
 
 /* ================== SIGNUP ================== */
 window.signup = async function () {
@@ -2066,12 +2090,12 @@ window.save = async function(){
 
   if(!currentUser) return;
 
-  await setDoc(doc(db,"tankerData",currentUser.uid),{
-    orders,
-    tankers,
-    parties,
-    updatedAt: Date.now()
-  });
+await setDoc(doc(db, "tankerData", user.uid), {
+  orders,
+  tankers,
+  parties,
+  updatedAt: Date.now()
+}, { merge: true });
 
 };
 
