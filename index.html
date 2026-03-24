@@ -818,19 +818,26 @@ margin-left:4px;
   
   <span>🎉Completed Orders</span>
   
-  <div style="display:flex; align-items:center; gap:6px; font-size:10px;">
-  <label>Auto Clean</label>
-  <select id="autoCleanToggle" onchange="saveAutoCleanSettings()">
+  <div style="display:flex; align-items:center; gap:4px; font-size:12px; background:#f5f7ff; padding:2px 6px; border-radius:12px;">
+  
+  <span style="color:#4e73df;">🧹</span>
+
+  <select id="autoCleanToggle" onchange="saveAutoCleanSettings()" 
+    style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:38px;appearance:none;">
     <option value="on">ON</option>
     <option value="off">OFF</option>
   </select>
-  <select id="autoCleanDays" onchange="saveAutoCleanSettings()">
-    <option value="1">1 Day</option>
-    <option value="2">2 Days</option>
-    <option value="3">3 Days</option>
+
+  <select id="autoCleanDays" onchange="saveAutoCleanSettings()" 
+    style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:38px;appearance:none;">
+    <option value="1">1D</option>
+    <option value="2">2D</option>
+    <option value="3">3D</option>
   </select>
+
 </div>
   
+
  </h3>
 
 
@@ -1293,20 +1300,39 @@ function multiSort() {
 
 
 function saveAutoCleanSettings(){
-  const toggle = document.getElementById("autoCleanToggle").value;
-  const days = document.getElementById("autoCleanDays").value;
+
+  const toggleEl = document.getElementById("autoCleanToggle");
+  const daysEl = document.getElementById("autoCleanDays");
+
+  const toggle = toggleEl.value;
+  const days = daysEl.value;
 
   localStorage.setItem("autoCleanToggle", toggle);
   localStorage.setItem("autoCleanDays", days);
+
+  // 🎨 Color feedback (ON = green, OFF = red)
+  toggleEl.style.color = toggle === "on" ? "green" : "red";
+
+  // 🔔 Small user feedback
+  console.log(`Auto Clean: ${toggle.toUpperCase()} (${days} Day)`);
+
 }
 
 function loadAutoCleanSettings(){
-  const toggle = localStorage.getItem("autoCleanToggle") || "on";
+
+  const toggle = localStorage.getItem("autoCleanToggle") || "off";
   const days = localStorage.getItem("autoCleanDays") || "2";
 
-  document.getElementById("autoCleanToggle").value = toggle;
-  document.getElementById("autoCleanDays").value = days;
+  const toggleEl = document.getElementById("autoCleanToggle");
+  const daysEl = document.getElementById("autoCleanDays");
+
+  toggleEl.value = toggle;
+  daysEl.value = days;
+
+  // 🎨 Apply color on load
+  toggleEl.style.color = toggle === "on" ? "green" : "red";
 }
+
 
 
 
@@ -1352,7 +1378,7 @@ function autoCleanCompletedOrders(){
     a.href = URL.createObjectURL(blob);
 
     const nowDate = new Date();
-    const name = `AutoBackup_${nowDate.getFullYear()}-${nowDate.getMonth()+1}-${nowDate.getDate()}.json`;
+    const name = `Tanker_AutoBackup_${nowDate.getFullYear()}-${nowDate.getMonth()+1}-${nowDate.getDate()}.json`;
 
     a.download = name;
     a.click();
