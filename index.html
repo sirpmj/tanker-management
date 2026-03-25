@@ -829,7 +829,7 @@ margin-left:4px;
   </select>
 
   <select id="autoCleanDays" onchange="saveAutoCleanSettings()" 
-    style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:38px;appearance:none;">
+    style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:34px;appearance:none;">
     <option value="1">1D</option>
     <option value="2">2D</option>
     <option value="3">3D</option>
@@ -1338,57 +1338,80 @@ function loadAutoCleanSettings(){
 
 function autoCleanCompletedOrders(){
 
+  console.log("🧹 Auto Clean Running...");
+
   const toggle = localStorage.getItem("autoCleanToggle") || "on";
-  if(toggle === "off") return;   // ❌ OFF hai to kuch nahi karega
+  if(toggle === "off"){
+    console.log("❌ Auto Clean OFF");
+    return;
+  }
 
   const days = Number(localStorage.getItem("autoCleanDays") || 2);
   const LIMIT = days * 24 * 60 * 60 * 1000;
 
   const now = Date.now();
 
-  let deletedOrders = [];
+  let toDelete = [];
 
-  orders = orders.filter(o => {
+  // 🔍 Step 1: Identify old completed orders
+  orders.forEach(o => {
+    if(o.status === "Complete" && o._completeTime){
 
-    if(o.status === "Complete"){
+      const age = now - o._completeTime;
 
-      if(!o._completeTime) return true;
-
-      const isOld = (now - o._completeTime) > LIMIT;
-
-      if(isOld){
-        deletedOrders.push(o); // 👈 backup ke liye store
-        return false;
+      if(age > LIMIT){
+        toDelete.push(o);
       }
-    }
 
-    return true;
+      // 🔍 DEBUG
+      console.log("Order:", o.id || "-", "Age(ms):", age);
+    }
   });
 
-  // 🔥 AUTO BACKUP BEFORE DELETE
-  if(deletedOrders.length > 0){
+  console.log("🗑️ To Delete:", toDelete.length);
 
-    const backupData = {
-      deletedAt: new Date().toISOString(),
-      orders: deletedOrders
-    };
+  // ❌ Nothing to delete
+  if(toDelete.length === 0) return;
 
-    const blob = new Blob([JSON.stringify(backupData)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+  const nowDate = new Date();
+  const dateStr = `${nowDate.getFullYear()}-${nowDate.getMonth()+1}-${nowDate.getDate()}`;
+  const timeStr = `${nowDate.getHours()}-${nowDate.getMinutes()}`;
 
-    const nowDate = new Date();
-    const name = `Tanker_AutoBackup_${nowDate.getFullYear()}-${nowDate.getMonth()+1}-${nowDate.getDate()}.json`;
+  // 💾 STEP 2: FULL BACKUP
+  const fullBlob = new Blob([JSON.stringify(orders)], {type:'application/json'});
+  const fullLink = document.createElement('a');
+  fullLink.href = URL.createObjectURL(fullBlob);
+  fullLink.download = `Tanker_FullBackup_${dateStr}_${timeStr}.json`;
+  fullLink.click();
 
-    a.download = name;
-    a.click();
+  // 💾 STEP 3: DELETE BACKUP
+  const deleteBackup = {
+    deletedAt: nowDate.toISOString(),
+    count: toDelete.length,
+    orders: toDelete
+  };
 
-    console.log(`Auto Backup Done: ${deletedOrders.length} orders`);
-  }
+  const delBlob = new Blob([JSON.stringify(deleteBackup)], {type:'application/json'});
+  const delLink = document.createElement('a');
+  delLink.href = URL.createObjectURL(delBlob);
+  delLink.download = `Tanker_DeleteBackup_${dateStr}_${timeStr}.json`;
+  delLink.click();
+
+  // 🗑️ STEP 4: DELETE (SAFE FILTER)
+  const deleteIds = new Set(toDelete.map(o => o._completeTime)); 
+  // 👆 fallback id nahi hai to time use kar rahe
+
+  orders = orders.filter(o => !deleteIds.has(o._completeTime));
 
   save();
-}
 
+  console.log(`✅ Backup Done + Deleted: ${toDelete.length}`);
+
+  // 🔄 UI refresh
+  if(typeof updateDeletePreview === "function"){
+    updateDeletePreview();
+  }
+}
 
 
 
