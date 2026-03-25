@@ -1338,13 +1338,8 @@ function loadAutoCleanSettings(){
 
 function autoCleanCompletedOrders(){
 
-  console.log("🧹 Auto Clean Running...");
-
   const toggle = localStorage.getItem("autoCleanToggle") || "on";
-  if(toggle === "off"){
-    console.log("❌ Auto Clean OFF");
-    return;
-  }
+  if(toggle === "off") return;
 
   const days = Number(localStorage.getItem("autoCleanDays") || 2);
   const LIMIT = days * 24 * 60 * 60 * 1000;
@@ -1353,66 +1348,40 @@ function autoCleanCompletedOrders(){
 
   let toDelete = [];
 
-  // 🔍 Step 1: Identify old completed orders
   orders.forEach(o => {
-    if(o.status === "Complete" && o._completeTime){
 
-      const age = now - o._completeTime;
+    if(o.status === "Complete" && o.scheduleDate){
+
+      const scheduleTime = new Date(o.scheduleDate).getTime();
+      const age = now - scheduleTime;
 
       if(age > LIMIT){
         toDelete.push(o);
       }
 
-      // 🔍 DEBUG
-      console.log("Order:", o.id || "-", "Age(ms):", age);
     }
+
   });
 
-  console.log("🗑️ To Delete:", toDelete.length);
-
-  // ❌ Nothing to delete
   if(toDelete.length === 0) return;
 
-  const nowDate = new Date();
-  const dateStr = `${nowDate.getFullYear()}-${nowDate.getMonth()+1}-${nowDate.getDate()}`;
-  const timeStr = `${nowDate.getHours()}-${nowDate.getMinutes()}`;
+  // 🟢 Backup (same file)
+  const blob = new Blob([JSON.stringify(orders)], {type:'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = "Tanker_AutoBackup.json";
+  link.click();
 
-  // 💾 STEP 2: FULL BACKUP
-  const fullBlob = new Blob([JSON.stringify(orders)], {type:'application/json'});
-  const fullLink = document.createElement('a');
-  fullLink.href = URL.createObjectURL(fullBlob);
-  fullLink.download = `Tanker_FullBackup_${dateStr}_${timeStr}.json`;
-  fullLink.click();
+  // 🗑️ Delete by ID (SAFE)
+  const deleteIds = new Set(toDelete.map(o => o.id));
 
-  // 💾 STEP 3: DELETE BACKUP
-  const deleteBackup = {
-    deletedAt: nowDate.toISOString(),
-    count: toDelete.length,
-    orders: toDelete
-  };
-
-  const delBlob = new Blob([JSON.stringify(deleteBackup)], {type:'application/json'});
-  const delLink = document.createElement('a');
-  delLink.href = URL.createObjectURL(delBlob);
-  delLink.download = `Tanker_DeleteBackup_${dateStr}_${timeStr}.json`;
-  delLink.click();
-
-  // 🗑️ STEP 4: DELETE (SAFE FILTER)
-  const deleteIds = new Set(toDelete.map(o => o._completeTime)); 
-  // 👆 fallback id nahi hai to time use kar rahe
-
-  orders = orders.filter(o => !deleteIds.has(o._completeTime));
+  orders = orders.filter(o => !deleteIds.has(o.id));
 
   save();
 
-  console.log(`✅ Backup Done + Deleted: ${toDelete.length}`);
-
-  // 🔄 UI refresh
-  if(typeof updateDeletePreview === "function"){
-    updateDeletePreview();
-  }
+  showOrders();
+  updateDashboard();
 }
-
 
 
 
@@ -1556,6 +1525,7 @@ return;
 }
 
 orders.push({
+id: Date.now() + Math.random(),   // ✅ ADD THIS
 date:d,
 scheduleDate:sd,
 party:p,
@@ -2157,6 +2127,11 @@ showToast("Logout Successful 👋");
   }
 
 };
+
+
+
+
+
 
 
 /* ================== AUTH STATE ================== */
