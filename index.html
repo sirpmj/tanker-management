@@ -573,34 +573,36 @@ margin-left:4px;
   .top-bar{
     flex-direction:column;
     align-items:center;
-    gap:4px;
+    gap:2px;
   }
 
   .top-title{
-    font-size:18px;   /* compact */
     text-align:center;
+    font-size:18px;
   }
 
   .top-bottom{
     display:flex;
-    flex-wrap:nowrap;         /* single line */
-    justify-content:space-between;
+    justify-content:center;
+    flex-wrap:nowrap;     /* ❌ wrap remove */
+    gap:6px;              /* space between buttons */
     width:100%;
-    gap:4px;
   }
 
-  .top-bottom button,
-  .user-info{
-    flex:1;                  /* sab equal width */
-    min-width:0;             /* overflow fix */
-    font-size:11px;          /* auto small */
-    padding:4px 2px;         /* compact */
+  .top-bottom button{
+    padding:2px 4px;      /* 🔥 small padding */
+    font-size:11px;
     white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;  /* long text cut */
   }
 
-  #welcomeUser{
+  #logoutBtn{
+    padding:2px 4px;
+  }
+
+  .user-info{
+    display:flex;
+    align-items:center;
+    gap:4px;
     font-size:11px;
   }
 
