@@ -1363,7 +1363,7 @@ function loadAutoCleanSettings(){
 
 function autoCleanCompletedOrders(){
 
-  const toggle = localStorage.getItem("autoCleanToggle") || "on";
+  const toggle = localStorage.getItem("autoCleanToggle") || "off";
   if(toggle === "off") return;
 
   const days = Number(localStorage.getItem("autoCleanDays") || 2);
@@ -1375,19 +1375,9 @@ function autoCleanCompletedOrders(){
 
   orders.forEach(o => {
 
-    if(o.status === "Complete"){
+    if(o.status === "Complete" && o._completeTime){
 
-      // ✅ Safe base time
-      let baseTime = o._completeTime;
-
-      if(!baseTime && o.scheduleDate){
-        const t = new Date(o.scheduleDate).getTime();
-        if(!isNaN(t)) baseTime = t;
-      }
-
-      if(!baseTime) return;
-
-      const age = now - Number(baseTime);
+      const age = now - Number(o._completeTime);
 
       if(!isNaN(age) && age >= LIMIT){
         toDelete.push(o);
@@ -1397,49 +1387,39 @@ function autoCleanCompletedOrders(){
 
   });
 
-  // ❌ Nothing to delete → STOP
+  // ❌ nothing to delete → no backup
   if(toDelete.length === 0){
     return;
   }
 
-  console.log("🧹 Auto deleting:", toDelete.length);
+  console.log("🧹 Deleting:", toDelete.length);
 
   // ===============================
-  // 🛑 PREVENT REPEATED BACKUP
+  // ✅ ALWAYS BACKUP BEFORE DELETE
   // ===============================
-  const lastBackup = Number(localStorage.getItem("lastAutoBackup") || 0);
+  try{
+    const backupData = {
+      deletedAt: new Date().toISOString(),
+      count: toDelete.length,
+      orders: toDelete
+    };
 
-  if(now - lastBackup > 60 * 60 * 1000){ // 1 hour
+    const blob = new Blob(
+      [JSON.stringify(backupData, null, 2)],
+      {type:'application/json'}
+    );
 
-    try{
-      const backupData = {
-        deletedAt: new Date().toISOString(),
-        count: toDelete.length,
-        orders: toDelete
-      };
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "AutoBackup_" + Date.now() + ".json";
+    link.click();
 
-      const blob = new Blob(
-        [JSON.stringify(backupData, null, 2)],
-        {type:'application/json'}
-      );
-
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = "Tanker_Backup_" + Date.now() + ".json";
-      link.click();
-
-      localStorage.setItem("lastAutoBackup", now);
-
-    }catch(e){
-      console.warn("Backup failed", e);
-    }
-
-  } else {
-    console.log("⏳ Backup skipped (recent)");
+  }catch(e){
+    console.warn("Backup failed", e);
   }
 
   // ===============================
-  // 🗑️ DELETE
+  // 🗑️ DELETE AFTER BACKUP
   // ===============================
   const deleteIds = new Set(toDelete.map(o => o.id));
   orders = orders.filter(o => !deleteIds.has(o.id));
@@ -1448,8 +1428,6 @@ function autoCleanCompletedOrders(){
   showOrders();
   updateDashboard();
 }
-
-
 
 
 function exportExcelMultiSheet(){
