@@ -587,6 +587,9 @@ margin-left:4px;
 
 }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 </head>
 <body>
 
@@ -645,7 +648,7 @@ margin-left:4px;
   </div>
 
   <div class="top-bottom">
-
+<button onclick="exportExcelMultiSheet()">📊 Excel Export</button>
     <button onclick="downloadBackup()">⬇ Backup</button>
     <button onclick="document.getElementById('restoreFile').click()">⬆ Restore</button>
     <input type="file" id="restoreFile" style="display:none" onchange="restoreBackup(event)">
@@ -1423,6 +1426,124 @@ function autoCleanCompletedOrders(){
   showOrders();
   updateDashboard();
 }
+
+
+
+
+function exportExcelMultiSheet(){
+
+  const wb = XLSX.utils.book_new();
+
+ // ===============================
+// 🚚 Tanker Sheet (FULL DATA)
+// ===============================
+let tankerData = [
+  ["Tanker No","Transporter","Capacity","Unload","Type","Status","Assigned Order","Active","Notes"]
+];
+
+tankers.forEach(t=>{
+  tankerData.push([
+    t.no,
+    t.transport || "",
+    t.capacity,
+    t.pump || "",              // ✅ Unload
+    t.type,
+    t.status,
+    t.assignedOrder || "",     // ✅ Assigned Order
+    t.active ? "Yes" : "No",   // ✅ Active
+    t.notes || ""
+  ]);
+});
+
+const tankerSheet = XLSX.utils.aoa_to_sheet(tankerData);
+XLSX.utils.book_append_sheet(wb, tankerSheet, "Tankers");
+
+
+  // ===============================
+  // ⏳ Pending Orders
+  // ===============================
+  let pendingData = [
+    ["Order Date","Schedule Date","Party","Item","Qty","Rate","Tanker"]
+  ];
+
+  orders.filter(o=>o.status==="Pending").forEach(o=>{
+    pendingData.push([
+      o.date,
+      o.scheduleDate,
+      o.party,
+      o.item,
+      o.orderQty,
+      o.rate || 0,
+      o.tanker || ""
+    ]);
+  });
+
+  const pendingSheet = XLSX.utils.aoa_to_sheet(pendingData);
+  XLSX.utils.book_append_sheet(wb, pendingSheet, "Pending");
+
+
+// ===============================
+// 🚛 Dispatched Orders
+// ===============================
+let dispatchData = [
+  ["Order Date","Schedule Date","Party","Item","Qty","Rate","Tanker","Status","Notes"]
+];
+
+orders.filter(o=>o.status==="Dispatched").forEach(o=>{
+
+  let tankerNotes = tankers.find(t=>t.no===o.tanker)?.notes || "";
+
+  dispatchData.push([
+    o.date,
+    o.scheduleDate,
+    o.party,
+    o.item,
+    o.orderQty,
+    o.rate || 0,
+    o.tanker || "",
+    o.status,
+    o.notes || tankerNotes   // ✅ FIXED
+  ]);
+});
+const dispatchSheet = XLSX.utils.aoa_to_sheet(dispatchData);
+XLSX.utils.book_append_sheet(wb, dispatchSheet, "Dispatched");
+
+
+
+  // ===============================
+  // 🎉 Completed Orders
+  // ===============================
+let completeData = [
+  ["Order Date","Schedule Date","Party","Item","Qty","Rate","Tanker","Notes"]
+];
+
+orders.filter(o=>o.status==="Complete").forEach(o=>{
+
+  let tankerNotes = tankers.find(t=>t.no===o._completedTanker || t.no===o.tanker)?.notes || "";
+
+  completeData.push([
+    o.date,
+    o.scheduleDate,
+    o.party,
+    o.item,
+    o.orderQty,
+    o.rate || 0,
+    o._completedTanker || o.tanker || "",
+    o.notes || tankerNotes   // ✅ FIXED
+  ]);
+});
+  const completeSheet = XLSX.utils.aoa_to_sheet(completeData);
+  XLSX.utils.book_append_sheet(wb, completeSheet, "Completed");
+
+
+
+  // ===============================
+  // 🚀 Download Excel
+  // ===============================
+  XLSX.writeFile(wb, "Tanker_Report.xlsx");
+}
+
+
 
 /* ===== Header filter helpers ===== */
 /* ===== Improved header filters with robust date handling ===== */
