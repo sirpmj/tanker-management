@@ -2375,11 +2375,34 @@ if(user){
 /* ---------------- OVERRIDE SAVE ---------------- */
 window.save = async function(){
 
+  if(!Array.isArray(orders) || !Array.isArray(tankers)){
+    console.error("Invalid data - save blocked");
+    return;
+  }
+
   localStorage.setItem('orders',JSON.stringify(orders));
   localStorage.setItem('tankers',JSON.stringify(tankers));
   localStorage.setItem('parties',JSON.stringify(parties));
 
   if(!currentUser) return;
+
+  // ✅ SMART CHECK (IMPORTANT)
+  const prev = JSON.parse(localStorage.getItem("lastSavedData") || "{}");
+
+  const isEmptyNow = orders.length === 0 && tankers.length === 0;
+  const wasEmptyBefore = !prev.orders?.length && !prev.tankers?.length;
+
+  // ❌ Only block if BOTH previous + current empty
+  if(isEmptyNow && wasEmptyBefore){
+    console.warn("⚠ Skip saving repeated empty data");
+    return;
+  }
+
+  // 💾 Save snapshot
+  localStorage.setItem("lastSavedData", JSON.stringify({
+    orders,
+    tankers
+  }));
 
   await setDoc(doc(db,"tankerData",currentUser.uid),{
     orders,
@@ -2387,7 +2410,6 @@ window.save = async function(){
     parties,
     updatedAt: Date.now()
   });
-
 };
 
 
