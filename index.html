@@ -573,19 +573,39 @@ margin-left:4px;
   .top-bar{
     flex-direction:column;
     align-items:center;
-    gap:2px;
+    gap:4px;
   }
 
   .top-title{
+    font-size:18px;   /* compact */
     text-align:center;
   }
 
   .top-bottom{
-    justify-content:center;
-    flex-wrap:wrap;
+    display:flex;
+    flex-wrap:nowrap;         /* single line */
+    justify-content:space-between;
+    width:100%;
+    gap:4px;
+  }
+
+  .top-bottom button,
+  .user-info{
+    flex:1;                  /* sab equal width */
+    min-width:0;             /* overflow fix */
+    font-size:11px;          /* auto small */
+    padding:4px 2px;         /* compact */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;  /* long text cut */
+  }
+
+  #welcomeUser{
+    font-size:11px;
   }
 
 }
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
