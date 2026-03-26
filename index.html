@@ -1350,12 +1350,21 @@ function autoCleanCompletedOrders(){
 
   orders.forEach(o => {
 
-    if(o.status === "Complete" && o.scheduleDate){
+    if(o.status === "Complete"){
 
-      const scheduleTime = new Date(o.scheduleDate).getTime();
-      const age = now - scheduleTime;
+      // ✅ Safe base time
+      let baseTime = o._completeTime;
 
-      if(age > LIMIT){
+      if(!baseTime && o.scheduleDate){
+        const t = new Date(o.scheduleDate).getTime();
+        if(!isNaN(t)) baseTime = t;
+      }
+
+      if(!baseTime) return;
+
+      const age = now - Number(baseTime);
+
+      if(!isNaN(age) && age >= LIMIT){
         toDelete.push(o);
       }
 
@@ -1363,27 +1372,57 @@ function autoCleanCompletedOrders(){
 
   });
 
-  if(toDelete.length === 0) return;
+  // ❌ Nothing to delete → STOP
+  if(toDelete.length === 0){
+    return;
+  }
 
-  // 🟢 Backup (same file)
-  const blob = new Blob([JSON.stringify(orders)], {type:'application/json'});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = "Tanker_AutoBackup.json";
-  link.click();
+  console.log("🧹 Auto deleting:", toDelete.length);
 
-  // 🗑️ Delete by ID (SAFE)
+  // ===============================
+  // 🛑 PREVENT REPEATED BACKUP
+  // ===============================
+  const lastBackup = Number(localStorage.getItem("lastAutoBackup") || 0);
+
+  if(now - lastBackup > 60 * 60 * 1000){ // 1 hour
+
+    try{
+      const backupData = {
+        deletedAt: new Date().toISOString(),
+        count: toDelete.length,
+        orders: toDelete
+      };
+
+      const blob = new Blob(
+        [JSON.stringify(backupData, null, 2)],
+        {type:'application/json'}
+      );
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = "Tanker_Backup_" + Date.now() + ".json";
+      link.click();
+
+      localStorage.setItem("lastAutoBackup", now);
+
+    }catch(e){
+      console.warn("Backup failed", e);
+    }
+
+  } else {
+    console.log("⏳ Backup skipped (recent)");
+  }
+
+  // ===============================
+  // 🗑️ DELETE
+  // ===============================
   const deleteIds = new Set(toDelete.map(o => o.id));
-
   orders = orders.filter(o => !deleteIds.has(o.id));
 
   save();
-
   showOrders();
   updateDashboard();
 }
-
-
 
 /* ===== Header filter helpers ===== */
 /* ===== Improved header filters with robust date handling ===== */
