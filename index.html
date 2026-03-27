@@ -860,6 +860,11 @@ margin-left:4px;
     <option value="3">3D</option>
   </select>
 
+  <button onclick="manualCleanCompletedOrders()" 
+    style="border:none; background:#4e73df; color:#fff; border-radius:10px; padding:2px 6px; cursor:pointer;">
+    Go
+  </button>
+
 </div>
   
 
@@ -1361,12 +1366,16 @@ function loadAutoCleanSettings(){
 
 
 
-function autoCleanCompletedOrders(){
 
-  const toggle = localStorage.getItem("autoCleanToggle") || "off";
-  if(toggle === "off") return;
+function manualCleanCompletedOrders(){
 
-  const days = Number(localStorage.getItem("autoCleanDays") || 2);
+  const toggle = document.getElementById("autoCleanToggle").value;
+  if(toggle === "off"){
+    alert("Auto Clean is OFF");
+    return;
+  }
+
+  const days = Number(document.getElementById("autoCleanDays").value || 2);
   const LIMIT = days * 24 * 60 * 60 * 1000;
 
   const now = Date.now();
@@ -1375,60 +1384,50 @@ function autoCleanCompletedOrders(){
 
   orders.forEach(o => {
 
-    if(o.status === "Complete" && o._completeTime){
+    // ✅ ONLY completed
+    if(o.status !== "Complete") return;
 
-      const age = now - Number(o._completeTime);
+    // 🔴 VERY IMPORTANT SAFETY
+    if(!o._completeTime || isNaN(Number(o._completeTime))){
+      console.warn("Skipped (no valid completeTime):", o);
+      return;
+    }
 
-      if(!isNaN(age) && age >= LIMIT){
-        toDelete.push(o);
-      }
+    const age = now - Number(o._completeTime);
 
+    // 🔴 EXTRA SAFETY (max 30 days check)
+    if(age < 0 || age > 30*24*60*60*1000){
+      console.warn("Skipped (invalid age):", o);
+      return;
+    }
+
+    if(age >= LIMIT){
+      toDelete.push(o);
     }
 
   });
 
-  // ❌ nothing to delete → no backup
   if(toDelete.length === 0){
+    alert(`No completed orders older than ${days} day(s)`);
     return;
   }
 
-  console.log("🧹 Deleting:", toDelete.length);
+  if(!confirm(`Delete ${toDelete.length} orders older than ${days} day(s)?`)) return;
 
-  // ===============================
-  // ✅ ALWAYS BACKUP BEFORE DELETE
-  // ===============================
-  try{
-    const backupData = {
-      deletedAt: new Date().toISOString(),
-      count: toDelete.length,
-      orders: toDelete
-    };
+  // ✅ backup
+  localStorage.setItem("lastDeletedBackup", JSON.stringify({
+    time: Date.now(),
+    data: toDelete
+  }));
 
-    const blob = new Blob(
-      [JSON.stringify(backupData, null, 2)],
-      {type:'application/json'}
-    );
-
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = "AutoBackup_" + Date.now() + ".json";
-    link.click();
-
-  }catch(e){
-    console.warn("Backup failed", e);
-  }
-
-  // ===============================
-  // 🗑️ DELETE AFTER BACKUP
-  // ===============================
-  const deleteIds = new Set(toDelete.map(o => o.id));
-  orders = orders.filter(o => !deleteIds.has(o.id));
+orders = orders.filter(o => !toDelete.includes(o));
 
   save();
   showOrders();
   updateDashboard();
-}
 
+  alert(`✅ Deleted ${toDelete.length} orders`);
+}
 
 function exportExcelMultiSheet(){
 
@@ -1848,17 +1847,20 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
     return;
 }
 
+// 👇 NOW safe to update
+orders[i][f] = v;
+
 // 🔥 SAVE DISPATCH TIME
 if (f === 'status' && v === 'Dispatched') {
     orders[i]._dispatchTime = Date.now();
 }
 
-// 🔥 SAVE COMPLETE TIME
+// 🔥 SAVE COMPLETE TIME (only first time)
 if (f === 'status' && v === 'Complete') {
-    orders[i]._completeTime = Date.now();
+    if (!orders[i]._completeTime) {
+        orders[i]._completeTime = Date.now();
+    }
 }
-  // 👇 NOW safe to update
-  orders[i][f] = v;
 
   /* ---------------- TANKER LOGIC SAME ---------------- */
 if (f === 'tanker') {
@@ -2069,7 +2071,6 @@ function escapeHtml(text){ if(text===null||text===undefined) return ''; return S
 /* ---------- INIT ---------- */
 refreshPartyDropdown(); 
 loadAutoCleanSettings();
-autoCleanCompletedOrders();
 showOrders(); 
 showTankers(); 
 updateDashboard(); 
