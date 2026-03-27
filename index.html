@@ -1415,10 +1415,33 @@ function manualCleanCompletedOrders(){
   if(!confirm(`Delete ${toDelete.length} orders older than ${days} day(s)?`)) return;
 
   // ✅ backup
-  localStorage.setItem("lastDeletedBackup", JSON.stringify({
-    time: Date.now(),
-    data: toDelete
-  }));
+// ✅ SAVE IN LOCAL (optional)
+localStorage.setItem("lastDeletedBackup", JSON.stringify({
+  time: Date.now(),
+  data: toDelete
+}));
+
+// ✅ DOWNLOAD FILE BACKUP
+try {
+  const backupData = {
+    deletedAt: new Date().toISOString(),
+    count: toDelete.length,
+    orders: toDelete
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(backupData, null, 2)],
+    { type: 'application/json' }
+  );
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `Tanker_Backup_${Date.now()}.json`;
+  link.click();
+
+} catch (e) {
+  console.warn("Backup download failed", e);
+}
 
 orders = orders.filter(o => !toDelete.includes(o));
 
