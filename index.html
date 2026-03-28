@@ -573,41 +573,61 @@ margin-left:4px;
   .top-bar{
     flex-direction:column;
     align-items:center;
-    gap:2px;
+    gap:6px;
+    padding:10px;
+    background:#ffffff;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08); /* 🔥 soft shadow */
+    margin:6px;
   }
 
   .top-title{
     text-align:center;
-    font-size:30px;
+    font-size:22px;
+    font-weight:600;
+    color:#333;
   }
 
-.top-bottom{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  column-gap:4px;   /* side space */
-  row-gap:10px;     /* 🔥 upar-niche ka space */
-  width:100%;
-}
+  .top-bottom{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    column-gap:6px;
+    row-gap:10px;
+    width:100%;
+  }
+
   .top-bottom button{
-    padding:3px 6px;      /* 🔥 small padding */
-    font-size:12px;
-    white-space:nowrap;
+    padding:6px 10px;
+    font-size:13px;
+    border:none;
+    border-radius:20px;   /* 🔥 pill shape */
+    background:#4a90e2;
+    color:#fff;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    transition:0.2s;
+  }
+
+  .top-bottom button:active{
+    transform:scale(0.95); /* 🔥 tap effect */
   }
 
   #logoutBtn{
-    padding:3px 6px;
+    background:#ff4d4f; /* 🔥 red logout */
   }
 
   .user-info{
     display:flex;
     align-items:center;
-    gap:4px;
+    justify-content:center;
+    gap:6px;
     font-size:12px;
+    background:#f5f7fa;
+    padding:4px 10px;
+    border-radius:20px;
   }
 
 }
-
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
