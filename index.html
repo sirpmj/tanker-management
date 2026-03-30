@@ -862,7 +862,7 @@ margin-bottom:8px;
 
   <select id="autoCleanDays" onchange="saveAutoCleanSettings()" 
     style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:34px;appearance:none;">
-   <option value="0">0D</option>
+   <option value="0">⚡Instant</option>
  <option value="1">1D</option>
     <option value="2">2D</option>
     <option value="3">3D</option>
@@ -1467,7 +1467,7 @@ function manualCleanCompletedOrders(){
 
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `FULL_Backup_${Date.now()}.json`;
+    link.download = `Tanker_FULL_Backup_${Date.now()}.json`;
     link.click();
 
   } catch (e) {
