@@ -862,7 +862,8 @@ margin-bottom:8px;
 
   <select id="autoCleanDays" onchange="saveAutoCleanSettings()" 
     style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:34px;appearance:none;">
-    <option value="1">1D</option>
+   <option value="0">0D</option>
+ <option value="1">1D</option>
     <option value="2">2D</option>
     <option value="3">3D</option>
   </select>
@@ -1378,7 +1379,7 @@ function manualCleanCompletedOrders(){
 
   const toggle = document.getElementById("autoCleanToggle").value;
   if(toggle === "off"){
-    alert("Auto Clean is OFF");
+    alert("❌ Auto Clean is OFF");
     return;
   }
 
@@ -1391,10 +1392,8 @@ function manualCleanCompletedOrders(){
 
   orders.forEach(o => {
 
-    // ✅ ONLY completed
     if(o.status !== "Complete") return;
 
-    // 🔴 VERY IMPORTANT SAFETY
     if(!o._completeTime || isNaN(Number(o._completeTime))){
       console.warn("Skipped (no valid completeTime):", o);
       return;
@@ -1402,7 +1401,6 @@ function manualCleanCompletedOrders(){
 
     const age = now - Number(o._completeTime);
 
-    // 🔴 EXTRA SAFETY (max 30 days check)
     if(age < 0 || age > 30*24*60*60*1000){
       console.warn("Skipped (invalid age):", o);
       return;
@@ -1414,52 +1412,79 @@ function manualCleanCompletedOrders(){
 
   });
 
+  // ===============================
+  // 🔥 SMART MESSAGE (ENGLISH)
+  // ===============================
   if(toDelete.length === 0){
-    alert(`No completed orders older than ${days} day(s)`);
+
+    const completed = orders.filter(o => o.status === "Complete");
+
+    if(completed.length === 0){
+      alert("❌ No completed orders found");
+      return;
+    }
+
+    const oldest = Math.min(...completed.map(o => Number(o._completeTime)));
+    const ageHours = Math.floor((Date.now() - oldest) / (1000*60*60));
+
+    alert(
+`ℹ️ No orders can be deleted yet
+
+📦 Total Completed Orders: ${completed.length}
+⏱ Oldest Order Age: ${ageHours} hours
+
+👉 Required Age for Deletion: ${days*24} hours`
+    );
+
     return;
   }
 
-  if(!confirm(`Delete ${toDelete.length} orders older than ${days} day(s)?`)) return;
+  if(!confirm(`⚠️ ${toDelete.length} orders will be deleted.\n\nDo you want to continue?`)) return;
 
-  // ✅ backup
-// ✅ SAVE IN LOCAL (optional)
-localStorage.setItem("lastDeletedBackup", JSON.stringify({
-  time: Date.now(),
-  data: toDelete
-}));
+  // ===============================
+  // 🔥 FULL BACKUP
+  // ===============================
+  try {
 
-// ✅ DOWNLOAD FILE BACKUP
-try {
-  const backupData = {
-    deletedAt: new Date().toISOString(),
-    count: toDelete.length,
-    orders: toDelete
-  };
+    const fullBackup = {
+      backupTime: new Date().toISOString(),
+      totalOrders: orders.length,
+      totalTankers: tankers.length,
+      totalParties: parties.length,
+      orders: orders,
+      tankers: tankers,
+      parties: parties
+    };
 
-  const blob = new Blob(
-    [JSON.stringify(backupData, null, 2)],
-    { type: 'application/json' }
-  );
+    // Save locally
+    localStorage.setItem("fullBackupBeforeDelete", JSON.stringify(fullBackup));
 
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `Tanker_Backup_${Date.now()}.json`;
-  link.click();
+    // Download backup file
+    const blob = new Blob(
+      [JSON.stringify(fullBackup, null, 2)],
+      { type: 'application/json' }
+    );
 
-} catch (e) {
-  console.warn("Backup download failed", e);
-}
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `FULL_Backup_${Date.now()}.json`;
+    link.click();
 
-orders = orders.filter(o => !toDelete.includes(o));
+  } catch (e) {
+    console.warn("Full backup failed", e);
+  }
+
+  // ===============================
+  // ❌ DELETE AFTER BACKUP
+  // ===============================
+  orders = orders.filter(o => !toDelete.includes(o));
 
   save();
   showOrders();
   updateDashboard();
 
-  alert(`✅ Deleted ${toDelete.length} orders`);
+  alert(`✅ ${toDelete.length} orders deleted successfully.\n📁 Full backup created`);
 }
-
-
 
 // 📊Export
 
