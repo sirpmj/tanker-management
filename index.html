@@ -862,7 +862,7 @@ margin-bottom:8px;
 
   <select id="autoCleanDays" onchange="saveAutoCleanSettings()" 
     style="border:none; background:transparent; font-size:12px; outline:none; cursor:pointer; min-width:34px;appearance:none;">
-   <option value="0">⚡Instant</option>
+   <option value="0">All</option>
  <option value="1">1D</option>
     <option value="2">2D</option>
     <option value="3">3D</option>
@@ -1074,6 +1074,7 @@ const pump = document.getElementById('pumpType').value;
 tankers.push({
   no: no,
   capacity: cap,
+usedCapacity: 0,   // ✅ NEW FIELD
   transport: transport,
   type: type,
   pump: pump,   // ✅ FIXED
@@ -1133,7 +1134,10 @@ function showTankers() {
   ${t.transport || ""}
 </td>
 
+
       <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
+
+
 
 <td contenteditable onblur="updatePump(${i}, this.innerText)">
 
@@ -1151,7 +1155,14 @@ function showTankers() {
 
 
       <td><span class="status-badge status-${t.status.replace(/\s/g,'')}">${escapeHtml(t.status)}</span></td>
-      <td>${escapeHtml(t.assignedOrder||'')}</td>
+      <td>
+  ${
+    orders
+      .filter(o => o.tanker === t.no && o.status !== 'Complete')
+      .map(o => o.party + " (" + o.orderQty + ")")
+      .join("<br>")
+  }
+</td>
       <td>
         <select onchange="updateTanker(${i},'active',this.value)">
           <option value="true" ${t.active?'selected':''}>Yes</option>
@@ -1372,7 +1383,15 @@ function loadAutoCleanSettings(){
 }
 
 
-
+function getUsedCapacity(tankerNo, currentOrderId){
+  return orders
+    .filter(o => 
+      o.tanker === tankerNo &&
+      o.id !== currentOrderId &&   // ✅ MUST
+      o.status !== 'Complete'
+    )
+    .reduce((sum, o) => sum + Number(o.orderQty || 0), 0);
+}
 
 
 function manualCleanCompletedOrders(){
@@ -1799,16 +1818,24 @@ function showOrders() {
   orders.forEach((o,i)=> {
 
     let tankerOpts = `<option value="">--Select--</option>`;
-    tankers.forEach(t=>{
-      const isAssignedElsewhere = orders.some((ord,j)=>j!==i && ord.tanker===t.no && ord.status!=='Complete');
-      const disabled = isAssignedElsewhere ? 'disabled' : '';
-      const sel = (t.no===o.tanker) ? 'selected' : '';
-      if(t.active && (t.status==='Filled' || t.no===o.tanker)){
-        tankerOpts += `<option value="${t.no}" ${sel} ${disabled}>
-          ${t.no} (${t.capacity} MT | Order: ${o.orderQty})
-        </option>`;
-      }
-    });
+tankers.forEach(t=>{
+  
+  const used = getUsedCapacity(t.no, o.id); // ✅ pass current order
+  const remaining = t.capacity - used;
+
+  // ✅ Only Filled tanker jisme space hai
+  if(
+    (t.status === 'Filled' && t.active && remaining > 0)
+    || t.no === o.tanker   // edit mode
+  ){
+    
+    tankerOpts += `<option value="${t.no}" ${t.no===o.tanker?'selected':''}>
+      ${t.no} (${t.capacity} MT | Rem: ${remaining} MT)
+    </option>`;
+  }
+
+});
+
 
 
 
@@ -1926,19 +1953,54 @@ if (f === 'tanker') {
 
     let selectedTanker = tankers.find(t => t.no === v);
 
-    // 🚨 CAPACITY VALIDATION BEFORE ASSIGN
- if (selectedTanker && Number(selectedTanker.capacity) < Number(orders[i].orderQty)) {
-    alert(`❌ Tanker capacity (${selectedTanker.capacity} MT) is less than Order Qty (${orders[i].orderQty} MT)`);
 
-    // 🔥 RESET selection (important)
-    orders[i].tanker = oldTanker || null;
+// 🔥 TOTAL USED CAPACITY CALCULATE
+let totalAssigned = orders
+  .filter(o => o.tanker === v && o.status !== 'Complete' && o.id !== orders[i].id)
+  .reduce((sum, o) => sum + Number(o.orderQty || 0), 0);
 
-    showOrders();
-    return;
+// 🔥 CHECK CAPACITY LIMIT
+if (selectedTanker && (totalAssigned + Number(orders[i].orderQty)) > selectedTanker.capacity) {
+
+  alert(`❌ Tanker full ho gaya hai 
+Capacity: ${selectedTanker.capacity} MT
+Used: ${totalAssigned} MT`);
+
+  // ✅ REVERT selection
+  orders[i].tanker = "";   // ya previous value store karke wapas set karo
+
+  showOrders(); // UI refresh
+
+  return;
+}
+
+
+// 🚨 CAPACITY VALIDATION BEFORE ASSIGN
+let used = getUsedCapacity(v, orders[i].id); // ✅ FIX
+let remaining = selectedTanker.capacity - used;
+
+// 🚨 Check remaining capacity
+if (Number(orders[i].orderQty) > remaining) {
+  alert(`❌ Tanker full ho jayega
+
+Capacity: ${selectedTanker.capacity} MT
+Used: ${used} MT
+Remaining: ${remaining} MT`);
+
+  showOrders();
+  return;
 }
 
     // Reset old tanker
     if (oldTanker && oldTanker !== v) {
+let oldAssigned = orders
+  .filter(o => o.tanker === oldTanker && o.status !== 'Complete')
+  .reduce((sum, o) => sum + Number(o.orderQty || 0), 0);
+
+let oldT = tankers.find(t => t.no === oldTanker);
+if(oldT){
+  oldT.usedCapacity = oldAssigned;
+}
         let t = tankers.find(t => t.no === oldTanker);
         if (t) {
             t.status = 'Filled';
@@ -1952,9 +2014,12 @@ if (f === 'tanker') {
     if (v) {
         let t = tankers.find(t => t.no === v);
         if (t) {
-            t.status = 'Dispatched';
+t.status = 'Filled'; // ✅ jab tak capacity full nahi hoti
             t.assignedOrder = orders[i].party;
-            orders[i].status = 'Dispatched';
+            orders[i].tanker = v;
+
+// ✅ Order ko dispatch me bhejo
+orders[i].status = 'Dispatched';
         }
     }
 
