@@ -1866,15 +1866,11 @@ tankers.forEach(t=>{
   const remaining = Number(t.capacity) - used;
 
 if (
-  t.no === o.tanker ||   // edit mode
-
+  t.no === o.tanker ||
   (
     t.active &&
-    t.status !== 'To Fill' &&    // 🔥 To Fill hide
-    (
-      remaining > 0 || 
-      t.status === 'Filled'
-    )
+    t.status !== 'To Fill' &&
+    t.status !== 'Empty'
   )
 ){
 
