@@ -55,6 +55,7 @@ tbody tr:hover{background:#f1f8ff;}
 .status-Empty{background:#aaa;}
 .status-ToFill{background:#f9d342;color:#000;}
 .status-Filled{background:#4caf50;}
+.status-Partial {  background:#ff9800;}
 .status-Dispatched{background:#2196f3;}
 .status-Complete{background:#8bc34a;}
 .action-btn{padding:4px 6px;font-size:12px;margin:1px;border-radius:6px}
@@ -1505,6 +1506,33 @@ function manualCleanCompletedOrders(){
   alert(`✅ ${toDelete.length} orders deleted successfully.\n📁 Full backup created`);
 }
 
+
+
+
+function updateTankerStatusByOrders(tankerNo) {
+
+  let t = tankers.find(t => t.no === tankerNo);
+  if (!t) return;
+
+  let activeOrders = orders.filter(o =>
+    o.tanker === tankerNo && o.status !== 'Complete'
+  );
+
+  // 🔥 FORCE override (ignore old status)
+  if (activeOrders.length === 0) {
+    t.status = "Empty";
+    t.assignedOrder = null;
+  }
+  else if (activeOrders.length === 1) {
+    t.status = "Partial";   // ✅ FIX
+    t.assignedOrder = activeOrders[0].party;
+  }
+  else {
+    t.status = "Dispatched";
+    t.assignedOrder = activeOrders.map(o => o.party).join(", ");
+  }
+}
+
 // 📊Export
 
 function exportExcelMultiSheet(){
@@ -1818,24 +1846,44 @@ function showOrders() {
   orders.forEach((o,i)=> {
 
     let tankerOpts = `<option value="">--Select--</option>`;
-tankers.forEach(t=>{
-  
-  const used = getUsedCapacity(t.no, o.id); // ✅ pass current order
-  const remaining = t.capacity - used;
 
-  // ✅ Only Filled tanker jisme space hai
-  if(
-    (t.status === 'Filled' && t.active && remaining > 0)
-    || t.no === o.tanker   // edit mode
-  ){
-    
+tankers.forEach(t=>{
+
+  const used = orders.reduce((sum, o2) => {
+
+    if (
+      o2.tanker === t.no &&
+      o2.status !== 'Complete' &&
+      o2 !== o
+    ) {
+      return sum + (parseFloat(o2.orderQty) || 0);
+    }
+
+    return sum;
+
+  }, 0);
+
+  const remaining = Number(t.capacity) - used;
+
+if (
+  t.no === o.tanker ||   // edit mode
+
+  (
+    t.active &&
+    t.status !== 'To Fill' &&    // 🔥 To Fill hide
+    (
+      remaining > 0 || 
+      t.status === 'Filled'
+    )
+  )
+){
+
     tankerOpts += `<option value="${t.no}" ${t.no===o.tanker?'selected':''}>
       ${t.no} (${t.capacity} MT | Rem: ${remaining} MT)
     </option>`;
   }
 
 });
-
 
 
 
@@ -1943,11 +1991,32 @@ if (f === 'status' && v === 'Dispatched') {
 
 // 🔥 SAVE COMPLETE TIME (only first time)
 if (f === 'status' && v === 'Complete') {
-    if (!orders[i]._completeTime) {
-        orders[i]._completeTime = Date.now();
-    }
+  let tNo = orders[i].tanker;
+
+  if (tNo) {
+    orders[i]._completedTanker = tNo;
+
+    // 🔥 DO NOT force Empty
+    updateTankerStatusByOrders(tNo);
+  }
 }
 
+
+
+function updateTankerStatus(tankerNo){
+  let t = tankers.find(t => t.no === tankerNo);
+  if(!t) return;
+
+  if(t.remainingLoad === 0){
+    t.status = "Empty";
+  }
+  else if(t.remainingLoad === t.capacity){
+    t.status = "Filled";
+  }
+  else{
+    t.status = "Partial";
+  }
+}
   /* ---------------- TANKER LOGIC SAME ---------------- */
 if (f === 'tanker') {
 
@@ -1992,36 +2061,37 @@ Remaining: ${remaining} MT`);
 }
 
     // Reset old tanker
-    if (oldTanker && oldTanker !== v) {
-let oldAssigned = orders
-  .filter(o => o.tanker === oldTanker && o.status !== 'Complete')
-  .reduce((sum, o) => sum + Number(o.orderQty || 0), 0);
+   if (oldTanker && oldTanker !== v) {
 
-let oldT = tankers.find(t => t.no === oldTanker);
-if(oldT){
-  oldT.usedCapacity = oldAssigned;
+  let oldT = tankers.find(t => t.no === oldTanker);
+
+  if (oldT) {
+
+    // 🔥 update used capacity
+    oldT.usedCapacity = orders
+      .filter(o => o.tanker === oldTanker && o.status !== 'Complete')
+      .reduce((sum, o) => sum + Number(o.orderQty || 0), 0);
+
+    // 🔥 smart status update
+    updateTankerStatusByOrders(oldTanker);
+  }
 }
-        let t = tankers.find(t => t.no === oldTanker);
-        if (t) {
-            t.status = 'Filled';
-            t.assignedOrder = null;
-        }
-    }
-
     // Assign new tanker
     orders[i].tanker = v;
 
-    if (v) {
-        let t = tankers.find(t => t.no === v);
-        if (t) {
-t.status = 'Filled'; // ✅ jab tak capacity full nahi hoti
-            t.assignedOrder = orders[i].party;
-            orders[i].tanker = v;
+if (v) {
+    let t = tankers.find(t => t.no === v);
+    if (t) {
+        t.assignedOrder = orders[i].party;
+        orders[i].tanker = v;
 
-// ✅ Order ko dispatch me bhejo
-orders[i].status = 'Dispatched';
-        }
+        // ✅ Order ko dispatch me bhejo
+        orders[i].status = 'Dispatched';
+
+        // 🔥🔥 YAHAN ADD KARO
+        updateTankerStatusByOrders(v);
     }
+}
 
     save();
     showOrders();
@@ -2030,17 +2100,16 @@ orders[i].status = 'Dispatched';
     return;   // 🔥 Important
 }
   /* ---------------- COMPLETE STATUS LOGIC ---------------- */
-  if (f === 'status' && v === 'Complete') {
-    let tNo = orders[i].tanker;
-    if (tNo) {
-      let t = tankers.find(t => t.no === tNo);
-      if (t) {
-        t.status = 'Empty';
-        t.assignedOrder = null;
-      }
-      orders[i]._completedTanker = tNo;
-    }
+if (f === 'status' && v === 'Complete') {
+  let tNo = orders[i].tanker;
+
+  if (tNo) {
+    orders[i]._completedTanker = tNo;
+
+    // 🔥 Smart status update
+    updateTankerStatusByOrders(tNo);
   }
+}
 
   save();
 
