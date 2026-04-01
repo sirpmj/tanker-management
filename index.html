@@ -1518,17 +1518,21 @@ function updateTankerStatusByOrders(tankerNo) {
     o.tanker === tankerNo && o.status !== 'Complete'
   );
 
-  // 🔥 FORCE override (ignore old status)
-  if (activeOrders.length === 0) {
+  let used = activeOrders.reduce(
+    (sum, o) => sum + Number(o.orderQty || 0), 
+    0
+  );
+
+  if (used === 0) {
     t.status = "Empty";
     t.assignedOrder = null;
   }
-  else if (activeOrders.length === 1) {
-    t.status = "Partial";   // ✅ FIX
-    t.assignedOrder = activeOrders[0].party;
+  else if (used < t.capacity) {
+    t.status = "Partial";   // 🔥 (To Fill)
+    t.assignedOrder = activeOrders.map(o => o.party).join(", ");
   }
-  else {
-    t.status = "Dispatched";
+  else if (used >= t.capacity) {
+    t.status = "Dispatched";   // 🔥 FULL
     t.assignedOrder = activeOrders.map(o => o.party).join(", ");
   }
 }
@@ -1866,11 +1870,17 @@ tankers.forEach(t=>{
   const remaining = Number(t.capacity) - used;
 
 if (
-  t.no === o.tanker ||
+  t.no === o.tanker ||   // edit mode
+
   (
     t.active &&
+    Number(o.orderQty) > 0 &&        // 🔥 Pending qty check
     t.status !== 'To Fill' &&
-    t.status !== 'Empty'
+    t.status !== 'Empty' &&
+    (
+      remaining > 0 || 
+      t.status === 'Filled'
+    )
   )
 ){
 
