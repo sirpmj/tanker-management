@@ -1988,13 +1988,67 @@ if (f === 'status' && v === 'Complete' && !orders[i].tanker) {
     return;
 }
 
-// 👇 NOW safe to update
+// ❌ REMOVE THIS LINE FROM TOP
+// orders[i][f] = v;
+
+
+// 🔥 DISPATCH LOGIC
+if (f === 'status' && v === 'Dispatched') {
+
+  let o = orders[i];
+
+  if (!o.tanker) {
+    alert("❌ Tanker select karo pehle");
+    return;
+  }
+
+  let t = tankers.find(t => t.no === o.tanker);
+  if (!t) return;
+
+  let tankerCap = Number(t.capacity) || 0;
+  let orderQty = Number(o.orderQty) || 0;
+
+  // 🔥 PARTIAL DISPATCH
+  let dispatchQty = Math.min(tankerCap, orderQty);
+
+  // ✅ NEW dispatched order
+  orders.push({
+    ...o,
+    id: Date.now() + Math.random(),
+    orderQty: dispatchQty,
+    status: 'Dispatched',
+    tanker: o.tanker,
+    _dispatchTime: Date.now()
+  });
+
+  // ✅ reduce pending
+  o.orderQty = orderQty - dispatchQty;
+
+  if (o.orderQty <= 0) {
+    orders.splice(i, 1);
+  } else {
+    o.tanker = null;
+    o.status = 'Pending';
+  }
+
+  updateTankerStatusByOrders(t.no);
+
+  save();
+  showOrders();
+  showTankers();
+  updateDashboard();
+  return;
+}
+
+
+// ✅ NORMAL UPDATE (ONLY AFTER SPECIAL CASES)
 orders[i][f] = v;
 
-// 🔥 SAVE DISPATCH TIME
+// 🔥 SAVE DISPATCH TIME (fallback only)
 if (f === 'status' && v === 'Dispatched') {
-    orders[i]._dispatchTime = Date.now();
+  orders[i]._dispatchTime = Date.now();
 }
+
 
 // 🔥 SAVE COMPLETE TIME (only first time)
 if (f === 'status' && v === 'Complete') {
@@ -2035,33 +2089,19 @@ let totalAssigned = orders
   .filter(o => o.tanker === v && o.status !== 'Complete' && o.id !== orders[i].id)
   .reduce((sum, o) => sum + Number(o.orderQty || 0), 0);
 
-// 🔥 CHECK CAPACITY LIMIT
-if (selectedTanker && (totalAssigned + Number(orders[i].orderQty)) > selectedTanker.capacity) {
-
-  alert(`❌ Tanker full ho gaya hai 
-Capacity: ${selectedTanker.capacity} MT
-Used: ${totalAssigned} MT`);
-
-  // ✅ REVERT selection
-  orders[i].tanker = "";   // ya previous value store karke wapas set karo
-
-  showOrders(); // UI refresh
-
-  return;
-}
 
 
-// 🚨 CAPACITY VALIDATION BEFORE ASSIGN
-let used = getUsedCapacity(v, orders[i].id); // ✅ FIX
+// 🚨 CAPACITY CHECK (ONLY FULL CHECK)
+let used = getUsedCapacity(v, orders[i].id);
 let remaining = selectedTanker.capacity - used;
 
-// 🚨 Check remaining capacity
-if (Number(orders[i].orderQty) > remaining) {
-  alert(`❌ Tanker full ho jayega
+// ❌ Only block if tanker already full
+if (remaining <= 0) {
+
+  alert(`❌ Tanker already full hai
 
 Capacity: ${selectedTanker.capacity} MT
-Used: ${used} MT
-Remaining: ${remaining} MT`);
+Used: ${used} MT`);
 
   showOrders();
   return;
@@ -2092,11 +2132,10 @@ if (v) {
         t.assignedOrder = orders[i].party;
         orders[i].tanker = v;
 
-        // ✅ Order ko dispatch me bhejo
-        orders[i].status = 'Dispatched';
+        // 🔥 AUTO DISPATCH TRIGGER
+        updateOrder(i, 'status', 'Dispatched');
 
-        // 🔥🔥 YAHAN ADD KARO
-        updateTankerStatusByOrders(v);
+        return; // 🔥 very important (double run rokega)
     }
 }
 
