@@ -1118,7 +1118,7 @@ function toggleTankerForm(){
 
 function showTankers() {
   let tb = document.querySelector('#tankerTable tbody'); tb.innerHTML = '';
-  const statusOrder = ["Empty","To Fill","Filled","Dispatched"];
+  const statusOrder = ["Empty","To Fill","Filled","Partial","Dispatched"];
   const indices = tankers.map((t,i)=>i).sort((a,b)=>{
     let ai = statusOrder.indexOf(tankers[a].status); if(ai===-1) ai=99;
     let bi = statusOrder.indexOf(tankers[b].status); if(bi===-1) bi=99;
@@ -1175,6 +1175,7 @@ function showTankers() {
         <button class="action-btn" onclick="deleteTanker(${i})">🗑️</button>
         <button class="action-btn" onclick="changeStatus(${i},'To Fill')">To Fill</button>
         <button class="action-btn" onclick="changeStatus(${i},'Filled')">Filled</button>
+        <button class="action-btn" onclick="changeStatus(${i},'Partial')">Partial</button>
         <button class="action-btn" onclick="changeStatus(${i},'Dispatched')">Dispatch</button>
         <button class="action-btn" onclick="changeStatus(${i},'Empty')">Empty</button>
         <button class="action-btn" onclick="moveTankerUp(${i})">⬆</button>
