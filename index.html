@@ -41,8 +41,28 @@ h3 {
   z-index: 10;
 }
 
+.status-badge.status-Pending{
+  background:#fff3cd;
+  color:#856404;
+}
+
+.status-badge.status-Dispatched{
+  background:#cfe2ff;
+  color:#084298;
+}
+
+.status-badge.status-Complete{
+  background:#d1e7dd;
+  color:#0f5132;
+}
 
 
+.status-badge{
+  padding:3px 6px;
+  border-radius:8px;
+  font-size:11px;
+  font-weight:600;
+}
 
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th,td{border:1px solid var(--border);padding:4px;text-align:center;vertical-align:middle}
@@ -55,7 +75,7 @@ tbody tr:hover{background:#f1f8ff;}
 .status-Empty{background:#aaa;}
 .status-ToFill{background:#f9d342;color:#000;}
 .status-Filled{background:#4caf50;}
-.status-Partial {  background:#ff9800;}
+.status-Partial{background:#ff9800;}
 .status-Dispatched{background:#2196f3;}
 .status-Complete{background:#8bc34a;}
 .action-btn{padding:4px 6px;font-size:12px;margin:1px;border-radius:6px}
@@ -661,7 +681,7 @@ button:hover{
 /* Table Upgrade */
 table{
   border-radius:12px;
-  overflow:hidden;
+  overflow:visible;
 }
 
 thead th{
