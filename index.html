@@ -616,6 +616,107 @@ margin-bottom:8px;
 
 }
 
+
+
+/* ===============================
+🔥 MODERN UI UPGRADE (SAFE ADD)
+=============================== */
+
+/* Smooth UI */
+*{
+  transition:0.2s ease;
+}
+
+/* Body polish */
+body{
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+/* Card Upgrade */
+.card{
+  border-radius:16px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Header Upgrade */
+.top-bar{
+  background:linear-gradient(90deg,#4e73df,#1cc88a);
+  color:#fff;
+}
+
+.top-title{
+  color:#fff !important;
+}
+
+/* Buttons Upgrade */
+button{
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.15);
+}
+
+button:hover{
+  transform:translateY(-1px);
+}
+
+/* Table Upgrade */
+table{
+  border-radius:12px;
+  overflow:hidden;
+}
+
+thead th{
+  background:linear-gradient(90deg,#4a90e2,#3578c6);
+}
+
+/* Row hover */
+tbody tr:hover{
+  background:#e8f2ff !important;
+}
+
+/* Status Badge Glow */
+.status-badge{
+  box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Dashboard cards */
+.dashboard .card{
+  border-radius:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.dashboard .card:hover{
+  transform:scale(1.05);
+}
+
+/* Input focus */
+input:focus, select:focus, textarea:focus{
+  outline:none;
+  border-color:#4a90e2;
+  box-shadow:0 0 0 2px rgba(74,144,226,0.2);
+}
+
+/* Toast animation smooth */
+.toast{
+  border-radius:12px;
+}
+
+/* Floating buttons polish */
+.mobile-fab button{
+  border-radius:30px !important;
+}
+
+/* Scrollbar (desktop) */
+::-webkit-scrollbar{
+  height:8px;
+  width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:10px;
+}
+
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -1997,6 +2098,11 @@ if (f === 'status' && v === 'Dispatched') {
 
   let o = orders[i];
 
+  // 🔥 ADD HERE (IMPORTANT)
+  if (!o.parentId) {  
+    o.parentId = o.id;  
+  }
+
   if (!o.tanker) {
     alert("❌ Tanker select karo pehle");
     return;
@@ -2008,20 +2114,18 @@ if (f === 'status' && v === 'Dispatched') {
   let tankerCap = Number(t.capacity) || 0;
   let orderQty = Number(o.orderQty) || 0;
 
-  // 🔥 PARTIAL DISPATCH
   let dispatchQty = Math.min(tankerCap, orderQty);
 
-  // ✅ NEW dispatched order
   orders.push({
     ...o,
     id: Date.now() + Math.random(),
+    parentId: o.parentId, // 🔥 IMPORTANT
     orderQty: dispatchQty,
     status: 'Dispatched',
     tanker: o.tanker,
     _dispatchTime: Date.now()
   });
 
-  // ✅ reduce pending
   o.orderQty = orderQty - dispatchQty;
 
   if (o.orderQty <= 0) {
@@ -2041,6 +2145,42 @@ if (f === 'status' && v === 'Dispatched') {
 }
 
 
+
+// 🔥 REVERSE LOGIC (ADD HERE - BEFORE NORMAL UPDATE)
+if (f === 'status' && v === 'Pending' && orders[i].status === 'Dispatched') {
+
+  let o = orders[i];
+
+  let pendingOrder = orders.find(p =>
+    p.parentId === o.parentId && p.status === 'Pending'
+  );
+
+  if (pendingOrder) {
+    pendingOrder.orderQty += Number(o.orderQty);
+  } else {
+    orders.push({
+      ...o,
+      id: Date.now() + Math.random(),
+      status: 'Pending',
+      tanker: null
+    });
+  }
+
+  if (o.tanker) {
+    updateTankerStatusByOrders(o.tanker);
+  }
+
+  orders.splice(i, 1);
+
+  save();
+  showOrders();
+  showTankers();
+  updateDashboard();
+  return;
+}
+
+
+
 // ✅ NORMAL UPDATE (ONLY AFTER SPECIAL CASES)
 orders[i][f] = v;
 
@@ -2052,16 +2192,20 @@ if (f === 'status' && v === 'Dispatched') {
 
 // 🔥 SAVE COMPLETE TIME (only first time)
 if (f === 'status' && v === 'Complete') {
+
+  // 🔥 ADD HERE (TOP par)
+  if (!orders[i]._completeTime) {
+    orders[i]._completeTime = Date.now();
+  }
+
   let tNo = orders[i].tanker;
 
   if (tNo) {
     orders[i]._completedTanker = tNo;
 
-    // 🔥 DO NOT force Empty
     updateTankerStatusByOrders(tNo);
   }
 }
-
 
 
 function updateTankerStatus(tankerNo){
@@ -2098,7 +2242,7 @@ let remaining = selectedTanker.capacity - used;
 // ❌ Only block if tanker already full
 if (remaining <= 0) {
 
-  alert(`❌ Tanker already full hai
+  alert(`❌ Tanker capacity insufficient
 
 Capacity: ${selectedTanker.capacity} MT
 Used: ${used} MT`);
