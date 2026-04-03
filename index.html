@@ -1784,20 +1784,33 @@ function updateTankerStatusByOrders(tankerNo) {
   );
 
   let used = activeOrders.reduce(
-    (sum, o) => sum + Number(o.orderQty || 0), 
+    (sum, o) => sum + Number(o.orderQty || 0),
     0
   );
 
-  if (used === 0) {
-    t.status = "Empty";
+  // ===============================
+  // 🔥 SMART STATUS LOGIC
+  // ===============================
+
+  if (activeOrders.length === 0) {
+
+    // 👉 पहले क्या था वही decide करो
+    if (t.status === "Dispatched" || t.status === "Partial") {
+      t.status = "Filled";   // ✅ correct fix
+    } else {
+      t.status = "Empty";
+    }
+
     t.assignedOrder = null;
   }
+
   else if (used < t.capacity) {
-    t.status = "Partial";   // 🔥 (To Fill)
+    t.status = "Partial";
     t.assignedOrder = activeOrders.map(o => o.party).join(", ");
   }
+
   else if (used >= t.capacity) {
-    t.status = "Dispatched";   // 🔥 FULL
+    t.status = "Dispatched";
     t.assignedOrder = activeOrders.map(o => o.party).join(", ");
   }
 }
@@ -2313,32 +2326,48 @@ if (f === 'status' && v === 'Dispatched') {
 if (f === 'status' && v === 'Pending' && orders[i].status === 'Dispatched') {
 
   let o = orders[i];
+  let tankerNo = o.tanker;   // 🔥 store before delete
 
-  let pendingOrder = orders.find(p =>
+  // 👉 parent find
+  let parent = orders.find(p =>
     p.parentId === o.parentId && p.status === 'Pending'
   );
 
-  if (pendingOrder) {
-    pendingOrder.orderQty += Number(o.orderQty);
+  if (parent) {
+    parent.orderQty += Number(o.orderQty);
   } else {
     orders.push({
-      ...o,
       id: Date.now() + Math.random(),
+      parentId: o.parentId || o.id,
+      date: o.date,
+      scheduleDate: o.scheduleDate,
+      party: o.party,
+      item: o.item,
+      orderQty: Number(o.orderQty),
+      rate: o.rate || 0,
+      tanker: null,
       status: 'Pending',
-      tanker: null
+      notes: ''
     });
   }
 
-  if (o.tanker) {
-    updateTankerStatusByOrders(o.tanker);
-  }
-
+  // ❌ remove dispatched FIRST
   orders.splice(i, 1);
+
+  // 🔥 VERY IMPORTANT (AFTER DELETE)
+  if (tankerNo) {
+    let t = tankers.find(t => t.no === tankerNo);
+    if (t) {
+      t.status = "Filled";        // ✅ FORCE FIX
+      t.assignedOrder = null;
+    }
+  }
 
   save();
   showOrders();
   showTankers();
   updateDashboard();
+
   return;
 }
 
