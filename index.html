@@ -64,6 +64,9 @@ h3 {
   font-weight:600;
 }
 
+
+
+
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th,td{border:1px solid var(--border);padding:4px;text-align:center;vertical-align:middle}
 thead th{background:var(--primary);color:#fff;position:sticky;top:0;z-index:10;height:32px}
@@ -1642,93 +1645,105 @@ function manualCleanCompletedOrders(){
   const now = Date.now();
 
   let toDelete = [];
+  let safeOrders = [];
 
   orders.forEach(o => {
 
     if(o.status !== "Complete") return;
 
     if(!o._completeTime || isNaN(Number(o._completeTime))){
-      console.warn("Skipped (no valid completeTime):", o);
       return;
     }
 
     const age = now - Number(o._completeTime);
 
-    if(age < 0 || age > 30*24*60*60*1000){
-      console.warn("Skipped (invalid age):", o);
-      return;
-    }
-
     if(age >= LIMIT){
       toDelete.push(o);
+    } else {
+      safeOrders.push(o);
     }
 
   });
 
   // ===============================
-  // 🔥 SMART MESSAGE (ENGLISH)
+  // 📊 SMART PREVIEW
   // ===============================
+  const totalCompleted = toDelete.length + safeOrders.length;
+
+  if(totalCompleted === 0){
+    alert("❌ No completed orders found");
+    return;
+  }
+
   if(toDelete.length === 0){
 
-    const completed = orders.filter(o => o.status === "Complete");
-
-    if(completed.length === 0){
-      alert("❌ No completed orders found");
-      return;
-    }
-
-    const oldest = Math.min(...completed.map(o => Number(o._completeTime)));
+    const oldest = Math.min(...safeOrders.map(o => Number(o._completeTime)));
     const ageHours = Math.floor((Date.now() - oldest) / (1000*60*60));
 
     alert(
-`ℹ️ No orders can be deleted yet
+`ℹ️ Nothing to clean yet
 
-📦 Total Completed Orders: ${completed.length}
-⏱ Oldest Order Age: ${ageHours} hours
-
-👉 Required Age for Deletion: ${days*24} hours`
+📦 Completed Orders: ${safeOrders.length}
+⏱ Oldest Orders Age: ${ageHours} hrs
+🎯 Required Age: ${days*24} hrs`
     );
 
     return;
   }
 
-  if(!confirm(`⚠️ ${toDelete.length} orders will be deleted.\n\nDo you want to continue?`)) return;
+  // ===============================
+  // 🔥 SMART CONFIRM MESSAGE
+  // ===============================
+  const confirmMsg = 
+`⚠️ CLEANUP PREVIEW
+
+🗑 Orders to Delete: ${toDelete.length}
+✅ Orders to Keep: ${safeOrders.length}
+
+👉 Condition: Older than ${days} day(s)
+
+Do you want to continue?`;
+
+  if(!confirm(confirmMsg)) return;
 
   // ===============================
-  // 🔥 FULL BACKUP
+  // 💾 BACKUP + UNDO STORE
   // ===============================
   try {
 
-    const fullBackup = {
-      backupTime: new Date().toISOString(),
-      totalOrders: orders.length,
-      totalTankers: tankers.length,
-      totalParties: parties.length,
-      orders: orders,
-      tankers: tankers,
-      parties: parties
+    const backup = {
+      time: new Date().toISOString(),
+      deleted: toDelete,
+      full: {
+        orders,
+        tankers,
+        parties
+      }
     };
 
-    // Save locally
-    localStorage.setItem("fullBackupBeforeDelete", JSON.stringify(fullBackup));
+    // Undo ke liye store
+    localStorage.setItem("lastDeletedOrders", JSON.stringify(toDelete));
+
+    // Full backup
+    localStorage.setItem("fullBackupBeforeDelete", JSON.stringify(backup.full));
 
     // Download backup file
     const blob = new Blob(
-      [JSON.stringify(fullBackup, null, 2)],
+      [JSON.stringify(backup.full, null, 2)],
       { type: 'application/json' }
     );
 
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Tanker_FULL_Backup_${Date.now()}.json`;
+    link.download = `Tanker_Backup_${Date.now()}.json`;
     link.click();
 
   } catch (e) {
-    console.warn("Full backup failed", e);
+    console.warn("Backup failed", e);
   }
 
   // ===============================
-  // ❌ DELETE AFTER BACKUP
+  // ❌ DELETE
   // ===============================
   orders = orders.filter(o => !toDelete.includes(o));
 
@@ -1736,10 +1751,27 @@ function manualCleanCompletedOrders(){
   showOrders();
   updateDashboard();
 
-  alert(`✅ ${toDelete.length} orders deleted successfully.\n📁 Full backup created`);
+  // ===============================
+  // 🔥 SUCCESS MESSAGE + UNDO
+  // ===============================
+  const undo = confirm(
+`✅ ${toDelete.length} orders deleted successfully.\n📁 Backup created
+
+↩️ Do you want to undo the last delete?`
+  );
+
+  if(undo){
+    const lastDeleted = JSON.parse(localStorage.getItem("lastDeletedOrders") || "[]");
+
+    orders.push(...lastDeleted);
+
+    save();
+    showOrders();
+    updateDashboard();
+
+    alert("♻️Orders restored successfully");
+  }
 }
-
-
 
 
 function updateTankerStatusByOrders(tankerNo) {
