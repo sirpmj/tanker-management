@@ -1362,6 +1362,12 @@ function showTankers() {
   indices.forEach((i)=>{
     let t = tankers[i];
     let row = document.createElement('tr');
+// 🔥 IDLE TANKER ALERT
+let hasOrder = orders.some(o => o.tanker === t.no && o.status !== "Complete");
+
+if(t.active && !hasOrder){
+  row.style.background = "#fff3cd"; // yellow
+}
     row.dataset.index = i;
     row.innerHTML = `
       <td contenteditable onblur="updateTanker(${i},'no',this.innerText.trim())">${escapeHtml(t.no)}</td>
@@ -2062,6 +2068,11 @@ function addOrder(){
 let d=document.getElementById('orderDate').value;
 let sd=document.getElementById('scheduleDate').value;
 let p=document.getElementById('orderParty').value.trim();
+if(p && !parties.some(x => x.toLowerCase() === p.toLowerCase())){
+  parties.push(p);
+  save();
+  refreshPartyDropdown();
+}
 let item=document.getElementById('orderItem').value.trim();
 let qty=document.getElementById('orderQty').value;
 let rate=document.getElementById('orderRate').value;
@@ -2182,6 +2193,11 @@ if (
     }
 
     let row=document.createElement('tr');
+// 🔥 OVERDUE ALERT
+if(o.status === "Pending" && new Date(o.scheduleDate) < new Date()){
+  row.style.background = "#ffe5e5";   // light red
+  row.style.borderLeft = "4px solid red";
+}
 
     // Pending Orders के लिए Status select हटा दिया गया
     let statusCell = '';
@@ -2427,14 +2443,14 @@ let totalAssigned = orders
 
 
 
-// 🚨 CAPACITY CHECK (ONLY FULL CHECK)
 let used = getUsedCapacity(v, orders[i].id);
 let remaining = selectedTanker.capacity - used;
+let orderQty = Number(orders[i].orderQty) || 0;
 
-// ❌ Only block if tanker already full
+// ❌ BLOCK: tanker already full
 if (remaining <= 0) {
 
-  alert(`❌ Tanker capacity insufficient
+  alert(`❌ Tanker Full!
 
 Capacity: ${selectedTanker.capacity} MT
 Used: ${used} MT`);
@@ -2443,6 +2459,21 @@ Used: ${used} MT`);
   return;
 }
 
+// ⚠️ WARNING: order exceeds remaining capacity
+if (orderQty > remaining) {
+
+  let confirmAssign = confirm(`⚠️ Capacity Warning!
+
+Order Qty: ${orderQty} MT
+Remaining Capacity: ${remaining} MT
+
+Do you still want to assign?`);
+
+  if(!confirmAssign){
+    showOrders();
+    return;
+  }
+}
     // Reset old tanker
    if (oldTanker && oldTanker !== v) {
 
