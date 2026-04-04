@@ -1291,45 +1291,62 @@ function closeInstallPopup(){
 
 /* ---------- TANKERS ---------- */
 function addTanker(){
+
   const no = document.getElementById('tankerNo').value.trim();
   const cap = Number(document.getElementById('tankerCapacity').value);
   const type = document.getElementById('tankerType').value;
-const pump = document.getElementById('pumpType').value;
-  const transport = document.getElementById('transportName').value.trim(); // ✅ ADD THIS
+  const pump = document.getElementById('pumpType').value;
+  const transport = document.getElementById('transportName').value.trim();
 
+  // ✅ Validation
   if(!no || !cap || !type){
     alert("Please enter Tanker No, Capacity and Type");
     return;
   }
 
-  if(tankers.some(t => t.no === no)){
+  if(cap <= 0){
+    alert("Capacity must be greater than 0");
+    return;
+  }
+
+  if(tankers.some(t => t.no.toLowerCase() === no.toLowerCase())){
     alert("Tanker already exists!");
     return;
   }
 
-tankers.push({
-  no: no,
-  capacity: cap,
-usedCapacity: 0,   // ✅ NEW FIELD
-  transport: transport,
-  type: type,
-  pump: pump,   // ✅ FIXED
-  status: "Empty",
-  assignedOrder: null,
-  active: true,
-  notes: ""
-});
+  // ✅ Add tanker
+  tankers.push({
+    no: no,
+    capacity: cap,
+    usedCapacity: 0,
+    transport: transport,
+    type: type,
+    pump: pump,
+    status: "Empty",
+    assignedOrder: null,
+    active: true,
+    notes: ""
+  });
 
   save();
   showTankers();
   updateDashboard();
 
+  // ✅ Reset fields
   document.getElementById('tankerNo').value = '';
   document.getElementById('tankerCapacity').value = '';
   document.getElementById('tankerType').value = '';
   document.getElementById('transportName').value = '';
-}
 
+  // ✅ Toast (optional but recommended)
+  if(typeof showToast === "function"){
+    showToast("🚚 Tanker Added");
+  }
+
+  // 🔥 MAIN FIX → MOBILE AUTO CLOSE
+  closeMobileForms();
+
+}
 
 function toggleOrderForm(){
   const order = document.getElementById('addOrderCard');
@@ -1350,6 +1367,91 @@ function toggleTankerForm(){
   tanker.classList.toggle('active', !isOpen);
   order.classList.remove('active');
 }
+
+
+let currentEdit = null;
+
+// 🔥 Start Editing (Double Click)
+function startEdit(el, index, field){
+
+  // Agar already koi edit open hai → close karo
+  if(currentEdit){
+    finishEdit();
+  }
+
+  currentEdit = {
+    el,
+    index,
+    field,
+    oldValue: el.innerText
+  };
+
+  el.setAttribute("contenteditable", "true");
+  el.classList.add("editing-cell");
+  el.focus();
+
+  // cursor end me le jao
+  document.execCommand('selectAll', false, null);
+  document.getSelection().collapseToEnd();
+}
+
+// ✅ Save Edit
+function finishEdit(){
+
+  if(!currentEdit) return;
+
+  const { el, index, field } = currentEdit;
+
+  el.setAttribute("contenteditable", "false");
+  el.classList.remove("editing-cell");
+
+  const newValue = el.innerText.trim();
+
+  // agar value change hui tabhi update
+  if(newValue !== currentEdit.oldValue){
+    updateTanker(index, field, newValue);
+    if(typeof showToast === "function"){
+      showToast("✅ Updated");
+    }
+  }
+
+  currentEdit = null;
+}
+
+// ❌ Cancel Edit (ESC)
+function cancelEdit(){
+  if(!currentEdit) return;
+
+  const { el, oldValue } = currentEdit;
+
+  el.innerText = oldValue;
+  el.setAttribute("contenteditable", "false");
+  el.classList.remove("editing-cell");
+
+  currentEdit = null;
+}
+
+// 🎹 Keyboard Controls
+document.addEventListener("keydown", function(e){
+
+  if(!currentEdit) return;
+
+  if(e.key === "Enter"){
+    e.preventDefault();
+    finishEdit();
+  }
+
+  if(e.key === "Escape"){
+    cancelEdit();
+  }
+});
+
+// 📱 Click outside → auto save
+document.addEventListener("click", function(e){
+  if(currentEdit && !currentEdit.el.contains(e.target)){
+    finishEdit();
+  }
+});
 
 function showTankers() {
   let tb = document.querySelector('#tankerTable tbody'); tb.innerHTML = '';
@@ -1376,48 +1478,30 @@ if(isActive && !hasOrder && t.status === "Empty"){
 }
     row.dataset.index = i;
     row.innerHTML = `
-      <td contenteditable onblur="updateTanker(${i},'no',this.innerText.trim())">${escapeHtml(t.no)}</td>
 
-<td contenteditable onblur="updateTanker(${i},'transport',this.innerText.trim())">
-  ${t.transport || ""}
-</td>
+<td ondblclick="startEdit(this, ${i}, 'no')">  ${escapeHtml(t.no)}</td>
 
+<td ondblclick="startEdit(this, ${i}, 'transport')">  ${escapeHtml(t.transport || "")}</td>
 
-      <td contenteditable onblur="updateTanker(${i},'capacity',this.innerText.trim())">${escapeHtml(String(t.capacity))}</td>
+<td ondblclick="startEdit(this, ${i}, 'capacity')">  ${escapeHtml(String(t.capacity))}</td>
 
+<td ondblclick="startEdit(this, ${i}, 'pump')">  ${escapeHtml(t.pump || "")}</td>
 
-
-<td contenteditable onblur="updatePump(${i}, this.innerText)">
-
-
-
-  ${t.pump || ""}
-</td>
 <td>
+  <span class="type-badge type-${t.type}">    ${escapeHtml(t.type || '')}  </span></td>
 
+<td>  <span class="status-badge status-${t.status.replace(/\s/g,'')}">    ${escapeHtml(t.status)}  </span></td>
 
-  <span class="type-badge type-${t.type}">
-    ${escapeHtml(t.type || '')}
-  </span>
+<td>  ${    orders      .filter(o => o.tanker === t.no && o.status !== 'Complete')      .map(o => o.party + " (" + o.orderQty + ")")      .join("<br>")  }</td>
+
+<td>  <select onchange="updateTanker(${i},'active',this.value)">
+    <option value="true" ${t.active?'selected':''}>Yes</option>
+    <option value="false" ${!t.active?'selected':''}>No</option>
+  </select>
 </td>
 
+<td ondblclick="startEdit(this, ${i}, 'notes')">  ${escapeHtml(t.notes || '')}</td>
 
-      <td><span class="status-badge status-${t.status.replace(/\s/g,'')}">${escapeHtml(t.status)}</span></td>
-      <td>
-  ${
-    orders
-      .filter(o => o.tanker === t.no && o.status !== 'Complete')
-      .map(o => o.party + " (" + o.orderQty + ")")
-      .join("<br>")
-  }
-</td>
-      <td>
-        <select onchange="updateTanker(${i},'active',this.value)">
-          <option value="true" ${t.active?'selected':''}>Yes</option>
-          <option value="false" ${!t.active?'selected':''}>No</option>
-        </select>
-      </td>
-      <td contenteditable onblur="updateTanker(${i},'notes',this.innerText)">${escapeHtml(t.notes||'')}</td>
       <td style="white-space:nowrap">
         <button class="action-btn" onclick="deleteTanker(${i})">🗑️</button>
         <button class="action-btn" onclick="changeStatus(${i},'To Fill')">To Fill</button>
@@ -2071,45 +2155,70 @@ function moveTankerDown(i){ if(i>=tankers.length-1) return; [tankers[i],tankers[
 
 /* ---------- ORDERS ---------- */
 function addOrder(){
-let d=document.getElementById('orderDate').value;
-let sd=document.getElementById('scheduleDate').value;
-let p=document.getElementById('orderParty').value.trim();
+
+let d = document.getElementById('orderDate').value;
+let sd = document.getElementById('scheduleDate').value;
+let p = document.getElementById('orderParty').value.trim();
+
 if(p && !parties.some(x => x.toLowerCase() === p.toLowerCase())){
   parties.push(p);
   save();
   refreshPartyDropdown();
 }
-let item=document.getElementById('orderItem').value.trim();
-let qty=document.getElementById('orderQty').value;
-let rate=document.getElementById('orderRate').value;
 
-if(!d||!sd||!p||!item||!qty){
-alert('Please fill all required fields');
-return;
+let item = document.getElementById('orderItem').value.trim();
+let qty = document.getElementById('orderQty').value;
+let rate = document.getElementById('orderRate').value;
+
+if(!d || !sd || !p || !item || !qty){
+  alert('Please fill all required fields');
+  return;
+}
+
+// 🔥 Optional Smart Validation
+if(Number(qty) <= 0){
+  alert("Qty must be greater than 0");
+  return;
 }
 
 orders.push({
-id: Date.now() + Math.random(),   // ✅ ADD THIS
-date:d,
-scheduleDate:sd,
-party:p,
-item:item,
-orderQty:Number(qty),
-rate: rate ? Number(rate) : 0,
-tanker:null,
-status:'Pending',
-notes:''
+  id: Date.now() + Math.random(),
+  date: d,
+  scheduleDate: sd,
+  party: p,
+  item: item,
+  orderQty: Number(qty),
+  rate: rate ? Number(rate) : 0,
+  tanker: null,
+  status: 'Pending',
+  notes: ''
 });
 
 save();
 showOrders();
 updateDashboard();
 
-// Reset only required fields
-document.getElementById('orderParty').value='';
-document.getElementById('orderQty').value='';
-document.getElementById('orderRate').value='';
+// ✅ Reset fields
+document.getElementById('orderParty').value = '';
+document.getElementById('orderQty').value = '';
+document.getElementById('orderRate').value = '';
 
+// ✅ Toast (agar use kar rahe ho)
+if(typeof showToast === "function"){
+  showToast("✅ Order Added");
+}
+
+// 🔥 MOBILE AUTO CLOSE (MAIN PART)
+closeMobileForms();
+
+}
+
+
+function closeMobileForms(){
+  if(window.innerWidth <= 600){
+    document.getElementById('addOrderCard').classList.remove('active');
+    document.getElementById('tankerCard').classList.remove('active');
+  }
 }
 
 
@@ -2217,51 +2326,179 @@ if(o.status === "Pending" && new Date(o.scheduleDate) < new Date()){
       </td>`;
     }
 
-    row.innerHTML=`
-      <td>${i+1}</td>
+ row.innerHTML = `
+  <td>${i+1}</td>
 
-      <td contenteditable onblur="updateOrder(${i},'date', displayToIso(this.innerText.trim()))">
-        ${isoToDisplay(o.date)}
-      </td>
+  <td ondblclick="startOrderEdit(this, ${i}, 'date')">
+    ${isoToDisplay(o.date)}
+  </td>
 
-      <td contenteditable onblur="updateOrder(${i},'scheduleDate', displayToIso(this.innerText.trim()), true)">
-        ${isoToDisplay(o.scheduleDate)}
-      </td>
+  <td ondblclick="startOrderEdit(this, ${i}, 'scheduleDate')">
+    ${isoToDisplay(o.scheduleDate)}
+  </td>
 
-      <td contenteditable onblur="updateOrder(${i},'party',this.innerText.trim())">${o.party}</td>
+  <td ondblclick="startOrderEdit(this, ${i}, 'party')">
+    ${o.party}
+  </td>
 
-      <td contenteditable onblur="updateOrder(${i},'rate',this.innerText.trim())">
-        ${o.rate || 0}
-      </td>
+  <td ondblclick="startOrderEdit(this, ${i}, 'rate')">
+    ${o.rate || 0}
+  </td>
 
-      <td>${o.item}</td>
+  <td>
+    ${o.item}
+  </td>
 
-      <td contenteditable onblur="updateOrder(${i},'orderQty',this.innerText.trim())">${o.orderQty}</td>
+  <td ondblclick="startOrderEdit(this, ${i}, 'orderQty')">
+    ${o.orderQty}
+  </td>
 
-      ${tankerCell}
+  ${tankerCell}
 
-      ${statusCell}  <!-- Status column केवल non-Pending orders के लिए -->
+  ${statusCell}
 
-      ${o.status !== "Pending" ? `
-        <td contenteditable onblur="updateOrder(${i},'notes',this.innerText.trim())">
-          ${o.notes || (tankers.find(t=>t.no===o.tanker)?.notes || '')}
-        </td>
-      ` : ''}
+  ${o.status !== "Pending" ? `
+    <td ondblclick="startOrderEdit(this, ${i}, 'notes')">
+      ${o.notes || (tankers.find(t=>t.no===o.tanker)?.notes || '')}
+    </td>
+  ` : ''}
 
-      <td style="white-space:nowrap;">
-        <button onclick="deleteOrder(${i})">🗑️</button>
+  <td style="white-space:nowrap;">
+    <button onclick="deleteOrder(${i})">🗑️</button>
 
-        ${o.status === "Pending" ? `
-          <button onclick="moveOrderUp(${i})">⬆</button>
-          <button onclick="moveOrderDown(${i})">⬇</button>
-        ` : ``}
-      </td>
-    `;
+    ${o.status === "Pending" ? `
+      <button onclick="moveOrderUp(${i})">⬆</button>
+      <button onclick="moveOrderDown(${i})">⬇</button>
+    ` : ``}
+  </td>
+`;
 
     if(o.status==="Complete") tbc.appendChild(row);
     else if(o.status==="Dispatched") tbd.appendChild(row);
     else tb.appendChild(row);
   });
+}
+
+
+
+
+let currentOrderEdit = null;
+
+// 🔥 Start Edit
+function startOrderEdit(el, index, field){
+
+  if(currentOrderEdit){
+    finishOrderEdit();
+  }
+
+  currentOrderEdit = {
+    el,
+    index,
+    field,
+    oldValue: el.innerText
+  };
+
+  el.setAttribute("contenteditable", "true");
+  el.classList.add("editing-cell");
+  el.focus();
+
+  document.execCommand('selectAll', false, null);
+  document.getSelection().collapseToEnd();
+}
+
+// ✅ Save
+
+
+// ❌ Cancel
+function cancelOrderEdit(){
+  if(!currentOrderEdit) return;
+
+  const { el, oldValue } = currentOrderEdit;
+
+  el.innerText = oldValue;
+  el.setAttribute("contenteditable", "false");
+  el.classList.remove("editing-cell");
+
+  currentOrderEdit = null;
+}
+
+
+
+document.addEventListener("keydown", function(e){
+
+  if(!currentOrderEdit) return;
+
+  if(e.key === "Enter"){
+    e.preventDefault();
+    finishOrderEdit();
+  }
+
+  if(e.key === "Escape"){
+    cancelOrderEdit();
+  }
+});
+
+document.addEventListener("click", function(e){
+  if(currentOrderEdit && !currentOrderEdit.el.contains(e.target)){
+    finishOrderEdit();
+  }
+});
+
+
+
+function finishOrderEdit(){
+
+  if(!currentOrderEdit) return;
+
+  const { el, index, field, oldValue } = currentOrderEdit;
+
+  el.setAttribute("contenteditable", "false");
+  el.classList.remove("editing-cell");
+
+  let newValue = el.innerText.trim();
+
+  // 🔥 DATE HANDLE
+  if(field === "date" || field === "scheduleDate"){
+    newValue = displayToIso(newValue);
+  }
+
+  // 🔥 NUMBER HANDLE
+  if(field === "orderQty" || field === "rate"){
+    newValue = Number(newValue) || 0;
+  }
+
+  // 🔥 COMPARE OLD vs NEW (MAIN LOGIC)
+  let isChanged = false;
+
+  if(field === "date" || field === "scheduleDate"){
+    isChanged = newValue !== orders[index][field];
+  }
+  else if(field === "orderQty" || field === "rate"){
+    isChanged = Number(newValue) !== Number(orders[index][field]);
+  }
+  else{
+    isChanged = newValue !== orders[index][field];
+  }
+
+  // ✅ ONLY UPDATE IF CHANGED
+  if(isChanged){
+
+    updateOrder(index, field, newValue, field === "scheduleDate");
+
+    if(typeof showToast === "function"){
+      showToast("✅ Saved");
+    }
+
+  } else {
+    // 🔥 No change → original value restore (clean UI)
+    if(field === "date" || field === "scheduleDate"){
+      el.innerText = isoToDisplay(orders[index][field]);
+    } else {
+      el.innerText = orders[index][field];
+    }
+  }
+
+  currentOrderEdit = null;
 }
 
 function updateOrder(i, f, v) {
