@@ -2333,9 +2333,9 @@ if(o.status === "Pending" && new Date(o.scheduleDate) < new Date()){
     ${isoToDisplay(o.date)}
   </td>
 
-  <td ondblclick="startOrderEdit(this, ${i}, 'scheduleDate')">
-    ${isoToDisplay(o.scheduleDate)}
-  </td>
+  <td contenteditable onblur="updateOrder(${i},'scheduleDate', displayToIso(this.innerText.trim()), true)">
+        ${isoToDisplay(o.scheduleDate)}
+      </td>
 
   <td ondblclick="startOrderEdit(this, ${i}, 'party')">
     ${o.party}
