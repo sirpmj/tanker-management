@@ -1361,12 +1361,18 @@ function showTankers() {
   });
   indices.forEach((i)=>{
     let t = tankers[i];
-    let row = document.createElement('tr');
-// 🔥 IDLE TANKER ALERT
-let hasOrder = orders.some(o => o.tanker === t.no && o.status !== "Complete");
+let row = document.createElement('tr');
 
-if(t.active && !hasOrder){
+// 🔥 ONLY EMPTY TANKER ALERT
+let hasOrder = orders.some(o => 
+  o.tanker === t.no && o.status !== "Complete"
+);
+
+let isActive = (t.active === true || t.active === "true");
+
+if(isActive && !hasOrder && t.status === "Empty"){
   row.style.background = "#fff3cd"; // yellow
+  row.style.borderLeft = "4px solid orange";
 }
     row.dataset.index = i;
     row.innerHTML = `
