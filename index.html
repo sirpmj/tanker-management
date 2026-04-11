@@ -2391,7 +2391,7 @@ function startOrderEdit(el, index, field){
     finishOrderEdit();
   }
 
-  // 🔥 Schedule Date → Direct Calendar Open
+  // 🔥 Schedule Date → Date Picker
   if(field === 'scheduleDate'){
 
     let oldValue = orders[index].scheduleDate || "";
@@ -2406,20 +2406,24 @@ function startOrderEdit(el, index, field){
 
     let input = el.querySelector("input");
 
-    // ⏱ slight delay for DOM render
     setTimeout(()=>{
       input.focus();
 
-      // 🔥 THIS LINE OPENS CALENDAR DIRECTLY
+      // ✅ Chrome / Edge
       if(input.showPicker){
-        input.showPicker();   // Chrome / Edge
+        input.showPicker();
       }
-    },100);
+      // ✅ Fallback (Mobile / Safari)
+      else{
+        input.click();
+      }
+
+    },50);
 
     return;
   }
 
-  // ✅ normal fields
+  // ✅ Normal edit
   currentOrderEdit = {
     el,
     index,
@@ -2438,11 +2442,13 @@ function startOrderEdit(el, index, field){
 
 
 function saveDateEdit(input, index){
+
   let newValue = input.value;
 
   updateOrder(index, 'scheduleDate', newValue);
 
   currentOrderEdit = null;
+
   showOrders();
 }
 
