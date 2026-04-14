@@ -851,6 +851,49 @@ input:focus, select:focus, textarea:focus{
 }
 
 
+
+/* 🔥 ONLY Tanker Status */
+.tanker-table table{
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+/* 🔥 Sticky Tanker Column */
+/* row background */
+.tanker-table tbody tr{
+  background: #fff; /* ya jo bhi aapka row color hai */
+}
+
+/* sticky column */
+.tanker-table th:first-child,
+.tanker-table td:first-child{
+  position: sticky;
+  left: 0;
+  background-color: inherit !important;
+  z-index: 2;
+}
+
+/* header fix */
+.tanker-table th:first-child{
+  z-index: 3;
+}
+
+/* alignment fix */
+.tanker-table th,
+.tanker-table td{
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+/* mobile only */
+@media(max-width:768px){
+  .tanker-table th,
+  .tanker-table td{
+    min-width: 120px;
+  }
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -1011,7 +1054,7 @@ input:focus, select:focus, textarea:focus{
 
     <div class="card" id="tankerDetailsCard">
 <h3>🚚Tanker Status</h3>
-<div style="max-height:300px;overflow:auto;">
+<div class="tanker-table" style="max-height:300px;overflow:auto;">
       <table id="tankerTable">
         <thead>
           <tr>
