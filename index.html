@@ -858,24 +858,27 @@ input:focus, select:focus, textarea:focus{
 .tanker-table td:first-child{
   position: sticky;
   left: 0;
-  background-color: inherit !important;
+  background-color: #fff !important; /* 🔥 FIX */
   z-index: 2;
 }
 
 /* header fix */
 .tanker-table th:first-child{
-  z-index: 3;
+  z-index: 5; /* 🔥 FIX */
 }
 
 /* 🔥 Sticky Header */
 .tanker-table thead th{
   position: sticky;
   top: 0;
-  background-color: inherit !important;
+  background-color: #fff !important; /* 🔥 FIX */
   z-index: 4;
 }
 
-
+/* table fix */
+.tanker-table{
+  border-collapse: separate; /* 🔥 IMPORTANT */
+}
 
 /* mobile only */
 @media(max-width:768px){
