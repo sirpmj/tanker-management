@@ -852,18 +852,6 @@ input:focus, select:focus, textarea:focus{
 
 
 
-/* 🔥 ONLY Tanker Status */
-.tanker-table table{
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-}
-
-/* 🔥 Sticky Tanker Column */
-/* row background */
-.tanker-table tbody tr{
-  background: #fff; /* ya jo bhi aapka row color hai */
-}
 
 /* sticky column */
 .tanker-table th:first-child,
@@ -879,12 +867,15 @@ input:focus, select:focus, textarea:focus{
   z-index: 3;
 }
 
-/* alignment fix */
-.tanker-table th,
-.tanker-table td{
-  border: 1px solid #ddd;
-  padding: 8px;
+/* 🔥 Sticky Header */
+.tanker-table thead th{
+  position: sticky;
+  top: 0;
+  background-color: inherit !important;
+  z-index: 4;
 }
+
+
 
 /* mobile only */
 @media(max-width:768px){
