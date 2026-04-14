@@ -851,6 +851,40 @@ input:focus, select:focus, textarea:focus{
 }
 
 
+
+/* 🔥 Scroll enable */
+.table-container{
+  overflow-x: auto;
+}
+
+/* 🔥 Table basic */
+table{
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* 🔥 Sticky Tanker Column (1st column) */
+td:first-child,
+th:first-child{
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
+}
+
+/* 🔥 Header sticky above */
+th:first-child{
+  z-index: 3;
+}
+
+/* 📱 Mobile tweak */
+@media(max-width:768px){
+  td, th{
+    min-width: 120px;
+  }
+}
+
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -925,6 +959,13 @@ input:focus, select:focus, textarea:focus{
 
   </div>
 
+</div>
+
+
+<div class="table-container">
+  <table>
+    ...
+  </table>
 </div>
 
   <!-- Dashboard -->
