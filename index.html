@@ -854,30 +854,51 @@ input:focus, select:focus, textarea:focus{
 
 
 /* sticky column */
+
+/* zebra rows */
+.tanker-table tbody tr:nth-child(even) td{
+  background-color: #f2f8ff;
+}
+
+/* 🔥 sticky first column bhi same zebra color le */
+.tanker-table tbody tr:nth-child(even) td:first-child{
+  background-color: #f2f8ff !important;
+}
+
 .tanker-table th:first-child,
 .tanker-table td:first-child{
   position: sticky;
   left: 0;
-  background-color: #fff !important; /* 🔥 FIX */
-  z-index: 2;
+  background-color: #fff !important;
+  z-index: 3; /* 👈 thoda upar */
 }
 
-/* header fix */
-.tanker-table th:first-child{
-  z-index: 5; /* 🔥 FIX */
+/* header fix (top-left cell sabse upar hona chahiye) */
+.tanker-table thead th:first-child{
+  z-index: 6; /* 👈 sabse upar */
+}
+
+/* hover effect */
+.tanker-table tbody tr:hover td{
+  background-color: #e6f2ff;
+}
+
+/* sticky column hover fix */
+.tanker-table tbody tr:hover td:first-child{
+  background-color: #e6f2ff !important;
 }
 
 /* 🔥 Sticky Header */
 .tanker-table thead th{
   position: sticky;
   top: 0;
-  background-color: #fff !important; /* 🔥 FIX */
-  z-index: 4;
+  background-color: #fff !important;
+  z-index: 5; /* 👈 column se upar */
 }
 
 /* table fix */
 .tanker-table{
-  border-collapse: separate; /* 🔥 IMPORTANT */
+  border-collapse: separate;
 }
 
 /* mobile only */
