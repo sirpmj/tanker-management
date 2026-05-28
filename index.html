@@ -1032,6 +1032,12 @@ input:focus, select:focus, textarea:focus{
   <input type="text" id="transportName" placeholder="Enter Transport Name ">
 </div>
 
+<!-- User -->
+<div>
+  <label>User</label>
+  <input type="text" id="tankerUser" placeholder="Enter User">
+</div>
+
 <div>
   <label>Tanker Type</label>
   <select id="tankerType" required>
@@ -1077,6 +1083,7 @@ input:focus, select:focus, textarea:focus{
 <th onclick="sortTankerByTransport()" style="cursor:pointer;">
   Transporter ⬍
 </th>
+<th>User</th>
 <th>Capacity</th>
 <th>Unload</th>
 <th onclick="sortTankerByType()" style="cursor:pointer;">
@@ -1355,7 +1362,7 @@ function addTanker(){
   const type = document.getElementById('tankerType').value;
   const pump = document.getElementById('pumpType').value;
   const transport = document.getElementById('transportName').value.trim();
-
+const user = document.getElementById('tankerUser').value.trim();
   // ✅ Validation
   if(!no || !cap || !type){
     alert("Please enter Tanker No, Capacity and Type");
@@ -1378,6 +1385,7 @@ function addTanker(){
     capacity: cap,
     usedCapacity: 0,
     transport: transport,
+user: user,
     type: type,
     pump: pump,
     status: "Empty",
@@ -1395,6 +1403,7 @@ function addTanker(){
   document.getElementById('tankerCapacity').value = '';
   document.getElementById('tankerType').value = '';
   document.getElementById('transportName').value = '';
+document.getElementById('tankerUser').value = '';
 
   // ✅ Toast (optional but recommended)
   if(typeof showToast === "function"){
@@ -1540,6 +1549,8 @@ if(isActive && !hasOrder && t.status === "Empty"){
 <td ondblclick="startEdit(this, ${i}, 'no')">  ${escapeHtml(t.no)}</td>
 
 <td ondblclick="startEdit(this, ${i}, 'transport')">  ${escapeHtml(t.transport || "")}</td>
+
+<td ondblclick="startEdit(this, ${i}, 'user')">  ${escapeHtml(t.user || "")}</td>
 
 <td ondblclick="startEdit(this, ${i}, 'capacity')">  ${escapeHtml(String(t.capacity))}</td>
 
@@ -1979,13 +1990,14 @@ function exportExcelMultiSheet(){
 // 🚚 Tanker Sheet (FULL DATA)
 // ===============================
 let tankerData = [
-  ["Tanker No","Transporter","Capacity","Unload","Type","Status","Assigned Order","Active","Notes"]
+  ["Tanker No","Transporter","User","Capacity","Unload","Type","Status","Assigned Order","Active","Notes"]
 ];
 
 tankers.forEach(t=>{
   tankerData.push([
     t.no,
     t.transport || "",
+t.user || "",
     t.capacity,
     t.pump || "",              // ✅ Unload
     t.type,
