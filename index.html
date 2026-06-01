@@ -20,7 +20,7 @@ input,select,textarea{width:100%;}
 button{ background:var(--primary);color:#fff;font-weight:600;cursor:pointer;transition:0.2s all;border:none;}
 button:hover{background:var(--primary-dark);}
 .flex{display:flex;gap:8px;flex-wrap:wrap;}
-.flex>div{flex:1;min-width:120px;}
+.flex>div{flex:1;min-width:112px;}
 
 h1{text-align:center;font-size:24px;margin-bottom:6px;color:var(--primary);}
 .card{ background:var(--card);padding:10px;border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08);margin-bottom:4px;}
@@ -998,7 +998,35 @@ input:focus, select:focus, textarea:focus{
      <div><label>Order Date</label><input type="date" id="orderDate"></div>
      <div><label>Schedule Date</label><input type="date" id="scheduleDate"></div>
      <div><label>Party</label><input list="partyList" id="orderParty"><datalist id="partyList"></datalist></div>
-     <div><label>Item</label><input type="text" id="orderItem" value="CSL"></div>
+<div>
+  <label>Item</label>
+  <input
+    type="text"
+    id="orderItem"
+    list="itemList"
+    placeholder="Select or type item"
+  >
+
+  <datalist id="itemList">
+    <option value="CSL">
+    <option value="HCL">
+    <option value="PAC">
+    <option value="SHC">
+    <option value="CCS">
+    <option value="LQA">
+  </datalist>
+</div>
+
+<div>
+  <label>Salesman Name</label>
+  <input type="text" id="salesmanName" placeholder="Salesman Name">
+</div>
+
+<div>
+  <label>From To</label>
+  <input type="text" id="fromTo" placeholder="Vapi → Ankleshwar">
+</div>
+
      <div><label>Order Qty</label><input type="number" id="orderQty"placeholder="Qty in Mt"></div>
 <div><label>Rate</label><input type="number" id="orderRate" placeholder="Rate in Mt"></div>
      <div style="align-self:flex-end;"><button onclick="addOrder()">➕Order</button></div>
@@ -1044,7 +1072,7 @@ input:focus, select:focus, textarea:focus{
     <option value="">Select Type</option>
     <option value="SS">SS</option>
     <option value="MS">MS</option>
- <option value="FRP">FRP</option>
+ <option value="FRP">Hdpe</option>
   </select>
 </div>
 
@@ -1080,10 +1108,8 @@ input:focus, select:focus, textarea:focus{
         <thead>
           <tr>
             <th>Tanker No</th>
-<th onclick="sortTankerByTransport()" style="cursor:pointer;">
-  Transporter ⬍
-</th>
-<th>User</th>
+<th onclick="sortTankerByTransport()" style="cursor:pointer;">Transporter ⬍</th>
+<th onclick="sortTankerByUser()" style="cursor:pointer;"> User ⬍ </th>
 <th>Capacity</th>
 <th>Unload</th>
 <th onclick="sortTankerByType()" style="cursor:pointer;">
@@ -1116,7 +1142,9 @@ input:focus, select:focus, textarea:focus{
 <th>Schedule Date <button class="sort-btn" onclick="multiSort()">⬍</button></th>
 <th>Party <button class="sort-btn" onclick="sortOrders('party')">⬍</button></th>
 <th>Rate</th>
-<th>Item <button class="sort-btn" onclick="sortOrders('item')">⬍</button></th>
+<th>Item<button class="sort-btn" onclick="sortOrders('item')">⬍</button></th>
+<th>Salesman</th>
+<th>From To</th>
 <th>Qty</th>
 
 <th>Tanker No</th>
@@ -1138,7 +1166,12 @@ input:focus, select:focus, textarea:focus{
         <tr>
           <th>Sr No</th><th>Order Date</th><th>Schedule Date</th>
           <th>Party</th><th>Rate</th>
-<th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
+<th>Item</th>
+<th>Salesman</th>
+<th>From To</th>
+<th>Qty</th>
+
+<th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -1186,7 +1219,10 @@ input:focus, select:focus, textarea:focus{
         <tr>
           <th>Sr No</th><th>Order Date</th><th>Schedule Date</th>
           <th>Party</th><th>Rate</th>
-<th>Item</th><th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
+<th>Item</th>
+<th>Salesman</th>
+<th>From To</th>
+<th>Qty</th><th>Tanker No</th><th>Status</th><th>Notes</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -1648,6 +1684,26 @@ function sortTankerByType() {
   showTankers();
 }
 
+
+let tankerUserSortAsc = true;
+
+function sortTankerByUser() {
+
+  tankers.sort((a, b) => {
+    const textA = (a.user || "").toLowerCase();
+    const textB = (b.user || "").toLowerCase();
+
+    return tankerUserSortAsc
+      ? textA.localeCompare(textB)
+      : textB.localeCompare(textA);
+  });
+
+  tankerUserSortAsc = !tankerUserSortAsc;
+
+  save();
+  showTankers();
+}
+
 let tankerTransportSortAsc = true;
 
 function sortTankerByTransport() {
@@ -1698,6 +1754,7 @@ function sortOrders(key) {
   save();
   showOrders();
 }
+
 
 
 function multiSort() {
@@ -2016,19 +2073,31 @@ XLSX.utils.book_append_sheet(wb, tankerSheet, "Tankers");
   // ⏳ Pending Orders
   // ===============================
   let pendingData = [
-    ["Order Date","Schedule Date","Party","Item","Qty","Rate","Tanker"]
+    [
+ "Order Date",
+ "Schedule Date",
+ "Party",
+ "Item",
+ "Salesman",
+ "From To",
+ "Qty",
+ "Rate",
+ "Tanker"
+]
   ];
 
   orders.filter(o=>o.status==="Pending").forEach(o=>{
     pendingData.push([
-      o.date,
-      o.scheduleDate,
-      o.party,
-      o.item,
-      o.orderQty,
-      o.rate || 0,
-      o.tanker || ""
-    ]);
+  o.date,
+  o.scheduleDate,
+  o.party,
+  o.item,
+  o.salesmanName || "",
+  o.fromTo || "",
+  o.orderQty,
+  o.rate || 0,
+  o.tanker || ""
+]);
   });
 
   const pendingSheet = XLSX.utils.aoa_to_sheet(pendingData);
@@ -2046,17 +2115,19 @@ orders.filter(o=>o.status==="Dispatched").forEach(o=>{
 
   let tankerNotes = tankers.find(t=>t.no===o.tanker)?.notes || "";
 
-  dispatchData.push([
-    o.date,
-    o.scheduleDate,
-    o.party,
-    o.item,
-    o.orderQty,
-    o.rate || 0,
-    o.tanker || "",
-    o.status,
-    o.notes || tankerNotes   // ✅ FIXED
-  ]);
+dispatchData.push([
+  o.date,
+  o.scheduleDate,
+  o.party,
+  o.item,
+  o.salesmanName || "",
+  o.fromTo || "",
+  o.orderQty,
+  o.rate || 0,
+  o.tanker || "",
+  o.status,
+  o.notes || tankerNotes
+]);
 });
 const dispatchSheet = XLSX.utils.aoa_to_sheet(dispatchData);
 XLSX.utils.book_append_sheet(wb, dispatchSheet, "Dispatched");
@@ -2075,15 +2146,17 @@ orders.filter(o=>o.status==="Complete").forEach(o=>{
   let tankerNotes = tankers.find(t=>t.no===o._completedTanker || t.no===o.tanker)?.notes || "";
 
   completeData.push([
-    o.date,
-    o.scheduleDate,
-    o.party,
-    o.item,
-    o.orderQty,
-    o.rate || 0,
-    o._completedTanker || o.tanker || "",
-    o.notes || tankerNotes   // ✅ FIXED
-  ]);
+  o.date,
+  o.scheduleDate,
+  o.party,
+  o.item,
+  o.salesmanName || "",
+  o.fromTo || "",
+  o.orderQty,
+  o.rate || 0,
+  o._completedTanker || o.tanker || "",
+  o.notes || tankerNotes
+]);
 });
   const completeSheet = XLSX.utils.aoa_to_sheet(completeData);
   XLSX.utils.book_append_sheet(wb, completeSheet, "Completed");
@@ -2236,6 +2309,12 @@ if(p && !parties.some(x => x.toLowerCase() === p.toLowerCase())){
   refreshPartyDropdown();
 }
 
+let salesmanName =
+document.getElementById('salesmanName').value.trim();
+
+let fromTo =
+document.getElementById('fromTo').value.trim();
+
 let item = document.getElementById('orderItem').value.trim();
 let qty = document.getElementById('orderQty').value;
 let rate = document.getElementById('orderRate').value;
@@ -2257,6 +2336,8 @@ orders.push({
   scheduleDate: sd,
   party: p,
   item: item,
+  salesmanName: salesmanName,
+  fromTo: fromTo,
   orderQty: Number(qty),
   rate: rate ? Number(rate) : 0,
   tanker: null,
@@ -2272,7 +2353,8 @@ updateDashboard();
 document.getElementById('orderParty').value = '';
 document.getElementById('orderQty').value = '';
 document.getElementById('orderRate').value = '';
-
+document.getElementById('salesmanName').value = '';
+document.getElementById('fromTo').value = '';
 // ✅ Toast (agar use kar rahe ho)
 if(typeof showToast === "function"){
   showToast("✅ Order Added");
@@ -2418,6 +2500,13 @@ if(o.status === "Pending" && new Date(o.scheduleDate) < new Date()){
   <td>
     ${o.item}
   </td>
+<td ondblclick="startOrderEdit(this, ${i}, 'salesmanName')">
+  ${o.salesmanName || ''}
+</td>
+
+<td ondblclick="startOrderEdit(this, ${i}, 'fromTo')">
+  ${o.fromTo || ''}
+</td>
 
   <td ondblclick="startOrderEdit(this, ${i}, 'orderQty')">
     ${o.orderQty}
