@@ -2467,6 +2467,7 @@ if (
     }
 
     let row=document.createElement('tr');
+    row.dataset.index = i;
 // 🔥 OVERDUE ALERT
 if(o.status === "Pending" && new Date(o.scheduleDate) < new Date()){
   row.style.background = "#ffe5e5";   // light red
@@ -3024,15 +3025,44 @@ const inactive = tankers.filter(t=>!t.active).length;
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
-<div class="card" onclick="scrollToSection('ordersCard')">⏳Pending:<br><strong>${pending}</strong></div>   
-<div class="card" onclick="scrollToSection('tankerCard');filterTankers('Dispatched')">🚛Dispatched:<br><strong>${disp}</strong></div>
+<div class="card" onclick="filterTodaySchedule()">📅Today Schedule:<br><strong>${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}</strong></div>
+<div class="card" onclick="filterPendingOrders()">⏳Pending:<br><strong>${pending}</strong></div>   
     
   
-    <div class="card" onclick="scrollToSection('completedOrdersCard')">🎉Complete:<br><strong>${complete}</strong></div>
+    <div class="card" onclick="filterCompleteOrders()">🎉Complete:<br><strong>${complete}</strong></div>
   `;
   filterTankers('active');
 }
 function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+function getLocalToday(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function filterPendingOrders(){
+  showOrders();
+  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
+    tr.style.display = '';
+  });
+  scrollToSection('ordersCard');
+}
+
+function filterCompleteOrders(){
+  showOrders();
+  scrollToSection('completedOrdersCard');
+}
+
+function filterTodaySchedule(){
+  const today = getLocalToday();
+  showOrders();
+  const rows = document.querySelectorAll('#orderTable tbody tr');
+  rows.forEach(tr=>{
+    const idx = Number(tr.dataset.index);
+    const o = orders[idx];
+    tr.style.display = (o && o.status==='Pending' && o.scheduleDate===today) ? '' : 'none';
+  });
+  scrollToSection('ordersCard');
+}
+
 function filterTankers(status){
   currentTankerFilter = status;
   document.querySelectorAll('#tankerTable tbody tr').forEach(tr=>{
