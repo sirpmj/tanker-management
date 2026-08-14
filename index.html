@@ -3025,19 +3025,16 @@ const inactive = tankers.filter(t=>!t.active).length;
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
-<div class="card" onclick="filterTodaySchedule()" style="text-align:center;">
-  <span style="font-weight:normal;display:inline-block;min-width:70px;">📅Today</span>
-  <span style="font-weight:normal;display:inline-block;min-width:70px;">Tomorrow</span><br>
-
-  <strong style="display:inline-block;min-width:70px;">
+<div class="card" onclick="filterTodayTomorrowSchedule()" style="text-align:center;">
+  <span onclick="event.stopPropagation();filterTodaySchedule();scrollToSection('ordersCard')" style="font-weight:normal;display:inline-block;min-width:70px;cursor:pointer;">📅Today</span>
+  <span onclick="event.stopPropagation();filterTomorrowSchedule();scrollToSection('ordersCard')" style="font-weight:normal;display:inline-block;min-width:70px;cursor:pointer;">Tomorrow</span><br>
+  <strong onclick="event.stopPropagation();filterTodaySchedule();scrollToSection('ordersCard')" style="display:inline-block;min-width:70px;cursor:pointer;">
     ${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}
   </strong>
-
-  <strong style="display:inline-block;min-width:70px;">
+  <strong onclick="event.stopPropagation();filterTomorrowSchedule();scrollToSection('ordersCard')" style="display:inline-block;min-width:70px;cursor:pointer;">
     ${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalTomorrow()).length}
   </strong>
 </div>
-
 <div class="card" onclick="filterPendingOrders()">⏳Pending:<br><strong>${pending}</strong></div>   
     
   
@@ -3069,11 +3066,22 @@ function filterCompleteOrders(){
   scrollToSection('completedOrdersCard');
 }
 
+function filterTodayTomorrowSchedule(){
+  const today = getLocalToday();
+  const tomorrow = getLocalTomorrow();
+  showOrders();
+  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
+    const idx = Number(tr.dataset.index);
+    const o = orders[idx];
+    tr.style.display = (o && o.status==='Pending' && (o.scheduleDate===today || o.scheduleDate===tomorrow)) ? '' : 'none';
+  });
+  scrollToSection('ordersCard');
+}
+
 function filterTodaySchedule(){
   const today = getLocalToday();
   showOrders();
-  const rows = document.querySelectorAll('#orderTable tbody tr');
-  rows.forEach(tr=>{
+  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
     const idx = Number(tr.dataset.index);
     const o = orders[idx];
     tr.style.display = (o && o.status==='Pending' && o.scheduleDate===today) ? '' : 'none';
@@ -3565,3 +3573,15 @@ if ('serviceWorker' in navigator) {
 
 </body>
 </html>
+<script>
+function filterTomorrowSchedule(){
+  const tomorrow = getLocalTomorrow();
+  showOrders();
+  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
+    const idx = Number(tr.dataset.index);
+    const o = orders[idx];
+    tr.style.display = (o && o.status==='Pending' && o.scheduleDate===tomorrow) ? '' : 'none';
+  });
+  scrollToSection('ordersCard');
+}
+</script>
