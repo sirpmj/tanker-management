@@ -3025,7 +3025,19 @@ const inactive = tankers.filter(t=>!t.active).length;
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
-<div class="card" onclick="filterTodaySchedule()">📅Today Schedule:<br><strong>${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}</strong></div>
+<div class="card" onclick="filterTodaySchedule()" style="text-align:center;">
+  <span style="font-weight:normal;display:inline-block;min-width:70px;">📅Today</span>
+  <span style="font-weight:normal;display:inline-block;min-width:70px;">Tomorrow</span><br>
+
+  <strong style="display:inline-block;min-width:70px;">
+    ${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}
+  </strong>
+
+  <strong style="display:inline-block;min-width:70px;">
+    ${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalTomorrow()).length}
+  </strong>
+</div>
+
 <div class="card" onclick="filterPendingOrders()">⏳Pending:<br><strong>${pending}</strong></div>   
     
   
@@ -3038,6 +3050,12 @@ function getLocalToday(){
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+function getLocalTomorrow(){
+  const d = new Date();
+  d.setDate(d.getDate()+1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 function filterPendingOrders(){
   showOrders();
   document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
