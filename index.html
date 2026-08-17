@@ -717,7 +717,7 @@ tbody tr:hover{
 .dashboard .card:hover{
   transform:scale(1.05);
 }
-/* Today / Tomorrow: two completely independent click areas */
+/* Today / Tomorrow: independent click areas + combined center/card click */
 .schedule-summary-card{cursor:default !important;}
 .schedule-summary-card:hover{transform:scale(1.05);}
 .schedule-summary-grid{display:grid;grid-template-columns:1fr 1fr;align-items:center;width:100%;}
@@ -3057,17 +3057,22 @@ const inactive = tankers.filter(t=>!t.active).length;
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
-<div class="card schedule-summary-card" style="text-align:center;padding:8px 4px;">
+<div class="card schedule-summary-card"
+     onclick="filterTodayTomorrowSchedule();scrollToSection('ordersCard')"
+     style="text-align:center;padding:8px 4px;">
   <div class="schedule-summary-grid">
-    <div class="schedule-summary-item" onclick="filterTodaySchedule();scrollToSection('ordersCard')">
+    <div class="schedule-summary-item"
+         onclick="event.stopPropagation();filterTodaySchedule();scrollToSection('ordersCard')">
       <div class="schedule-label">📅 Today</div>
       <strong>${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}</strong>
     </div>
-    <div class="schedule-summary-item" onclick="filterTomorrowSchedule();scrollToSection('ordersCard')">
+    <div class="schedule-summary-item"
+         onclick="event.stopPropagation();filterTomorrowSchedule();scrollToSection('ordersCard')">
       <div class="schedule-label">Tomorrow</div>
       <strong>${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalTomorrow()).length}</strong>
     </div>
   </div>
+</div>
 </div>
 <div class="card" onclick="filterPendingOrders()">⏳Pending:<br><strong>${pending}</strong></div>   
     
@@ -3106,32 +3111,56 @@ function filterCompleteOrders(){
   scrollToSection('completedOrdersCard');
 }
 
-function filterTodaySchedule(){
-  const today = getLocalToday();
-  showOrders();
+function getOrdersSectionElement(){
+  return document.getElementById('ordersCard');
+}
 
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
-      const idx = Number(tr.dataset.index);
-      const o = orders[idx];
-      tr.style.display = (o && o.status==='Pending' && o.scheduleDate===today) ? '' : 'none';
-    });
-    scrollToSection('ordersCard');
+function jumpToOrders(){
+  const el = getOrdersSectionElement();
+  if(!el) return;
+  // Mobile sticky header/FAB safe jump; desktop remains smooth.
+  const isMobile = window.innerWidth <= 600;
+  const header = document.querySelector('header, .top-header, .header');
+  const offset = isMobile ? ((header && header.offsetHeight) || 0) + 12 : 12;
+  const y = el.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({top: Math.max(0,y), behavior:'smooth'});
+}
+
+function applyScheduleFilter(mode){
+  showOrders();
+  const today = getLocalToday();
+  const tomorrow = getLocalTomorrow();
+
+  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
+    const idx = Number(tr.dataset.index);
+    const o = orders[idx];
+
+    let show = false;
+    if(mode === 'today'){
+      show = !!(o && o.status === 'Pending' && o.scheduleDate === today);
+    }else if(mode === 'tomorrow'){
+      show = !!(o && o.status === 'Pending' && o.scheduleDate === tomorrow);
+    }else{
+      show = !!(o && o.status === 'Pending' &&
+                 (o.scheduleDate === today || o.scheduleDate === tomorrow));
+    }
+    tr.style.display = show ? '' : 'none';
   });
+
+  // Let the table render before calculating the jump position on mobile.
+  requestAnimationFrame(()=>requestAnimationFrame(jumpToOrders));
+}
+
+function filterTodayTomorrowSchedule(){
+  applyScheduleFilter('both');
+}
+
+function filterTodaySchedule(){
+  applyScheduleFilter('today');
 }
 
 function filterTomorrowSchedule(){
-  const tomorrow = getLocalTomorrow();
-  showOrders();
-
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
-      const idx = Number(tr.dataset.index);
-      const o = orders[idx];
-      tr.style.display = (o && o.status==='Pending' && o.scheduleDate===tomorrow) ? '' : 'none';
-    });
-    scrollToSection('ordersCard');
-  });
+  applyScheduleFilter('tomorrow');
 }
 
 function filterTankers(status){
