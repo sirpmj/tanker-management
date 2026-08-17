@@ -3118,12 +3118,37 @@ function getOrdersSectionElement(){
 function jumpToOrders(){
   const el = getOrdersSectionElement();
   if(!el) return;
-  // Mobile sticky header/FAB safe jump; desktop remains smooth.
+
   const isMobile = window.innerWidth <= 600;
-  const header = document.querySelector('header, .top-header, .header');
-  const offset = isMobile ? ((header && header.offsetHeight) || 0) + 12 : 12;
-  const y = el.getBoundingClientRect().top + window.pageYOffset - offset;
-  window.scrollTo({top: Math.max(0,y), behavior:'smooth'});
+
+  // Desktop: keep the original behavior.
+  if(!isMobile){
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+
+  // Mobile: detect the ACTUAL fixed/sticky top elements instead of
+  // guessing a header class. This keeps Orders completely below the header.
+  let topOffset = 12;
+  document.querySelectorAll('body *').forEach(node=>{
+    const s = getComputedStyle(node);
+    const r = node.getBoundingClientRect();
+    if((s.position === 'fixed' || s.position === 'sticky') &&
+       r.top <= 2 && r.bottom > 0 && r.width > 0 && r.height > 0){
+      topOffset = Math.max(topOffset, r.bottom + 12);
+    }
+  });
+
+  const y = el.getBoundingClientRect().top + window.pageYOffset - topOffset;
+  window.scrollTo({top:Math.max(0,y), behavior:'smooth'});
+
+  // Correct once more after mobile layout/scroll settles.
+  setTimeout(()=>{
+    const correction = el.getBoundingClientRect().top - topOffset;
+    if(Math.abs(correction) > 4){
+      window.scrollBy({top:correction, behavior:'smooth'});
+    }
+  }, 500);
 }
 
 function applyScheduleFilter(mode){
