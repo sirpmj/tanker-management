@@ -717,6 +717,22 @@ tbody tr:hover{
 .dashboard .card:hover{
   transform:scale(1.05);
 }
+/* Today / Tomorrow: two completely independent click areas */
+.schedule-summary-card{cursor:default !important;}
+.schedule-summary-card:hover{transform:scale(1.05);}
+.schedule-summary-grid{display:grid;grid-template-columns:1fr 1fr;align-items:center;width:100%;}
+.schedule-summary-item{min-width:0;padding:2px 7px;cursor:pointer;border-radius:10px;user-select:none;}
+.schedule-summary-item + .schedule-summary-item{border-left:1px solid #dbe3ef;}
+.schedule-summary-item:hover{background:#eef6ff;transform:none;}
+.schedule-label{font-weight:600;font-size:12px;white-space:nowrap;line-height:1.25;}
+.schedule-summary-item strong{display:block;font-size:18px;line-height:1.25;margin-top:2px;}
+@media(max-width:600px){
+  .schedule-summary-card{padding:7px 2px !important;}
+  .schedule-summary-item{padding:2px 4px;}
+  .schedule-label{font-size:11px;}
+  .schedule-summary-item strong{font-size:17px;}
+}
+
 
 /* Input focus */
 input:focus, select:focus, textarea:focus{
@@ -917,64 +933,26 @@ input:focus, select:focus, textarea:focus{
 }
 
 
-/* Mobile only: Today 0 / Tomorrow 3 in two lines; desktop remains unchanged. */
-@media (max-width:600px){
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"]{
-    display:grid;
-    grid-template-columns:auto auto;
-    grid-template-rows:1fr 1fr;
-    align-items:center;
-    justify-content:center;
-    column-gap:6px;
-    row-gap:2px;
-    padding:6px 8px;
-    min-width:105px;
-    pointer-events:none;
+/* Keep login hidden until Firebase finishes restoring the session.
+   This prevents the login screen flashing on refresh for an already logged-in user. */
+body.auth-checking #loginSection{display:none !important;}
+
+/* Mobile schedule buttons: each is an independent tap target */
+@media(max-width:768px){
+  .schedule-summary-card{background:#fff;}
+  .schedule-summary-item{
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
   }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > br{
-    display:none;
-  }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > span,
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > strong{
-    display:block !important;
-    min-width:0 !important;
-    width:auto !important;
-    margin:0;
-    padding:2px 3px;
-    pointer-events:auto;
-    cursor:pointer;
-    line-height:1.2;
-  }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > span:nth-of-type(1){
-    grid-column:1; grid-row:1;
-    font-weight:600 !important;
-    font-size:11px;
-  }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > strong:nth-of-type(1){
-    grid-column:2; grid-row:1;
-    font-size:17px;
-  }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > span:nth-of-type(2){
-    grid-column:1; grid-row:2;
-    font-weight:600 !important;
-    font-size:11px;
-  }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > strong:nth-of-type(2){
-    grid-column:2; grid-row:2;
-    font-size:17px;
-  }
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > span:hover,
-  #dashboard .card[onclick="filterTodayTomorrowSchedule()"] > strong:hover{
-    background:#eef6ff;
-    border-radius:8px;
-  }
+  .schedule-summary-item:hover{background:transparent;}
+  .schedule-summary-item:active{background:#eef6ff;}
 }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 </head>
-<body>
+<body class="auth-checking">
 
 <div id="loginSection">
 
@@ -1354,6 +1332,7 @@ let tankers = JSON.parse(localStorage.getItem('tankers')||'[]');
 let parties = JSON.parse(localStorage.getItem('parties')||'[]');
 let currentTankerFilter = 'active';
 let currentUser = null;
+let authInitialized = false;
 
 /* ---------- PARTY ---------- */
 function refreshPartyDropdown(){
@@ -3078,15 +3057,17 @@ const inactive = tankers.filter(t=>!t.active).length;
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('active')">💡Active:<br><strong>${active}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('To Fill')">📝To Fill:<br><strong>${tankers.filter(t=>t.status==='To Fill').length}</strong></div>
 <div class="card" onclick="scrollToSection('tankerCard');filterTankers('Filled')">📗Filled:<br><strong>${filled}</strong></div>
-<div class="card" onclick="filterTodayTomorrowSchedule()" style="text-align:center;">
-  <span onclick="event.stopPropagation();filterTodaySchedule();scrollToSection('ordersCard')" style="font-weight:normal;display:inline-block;min-width:70px;cursor:pointer;">📅Today</span>
-  <span onclick="event.stopPropagation();filterTomorrowSchedule();scrollToSection('ordersCard')" style="font-weight:normal;display:inline-block;min-width:70px;cursor:pointer;">Tomorrow</span><br>
-  <strong onclick="event.stopPropagation();filterTodaySchedule();scrollToSection('ordersCard')" style="display:inline-block;min-width:70px;cursor:pointer;">
-    ${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}
-  </strong>
-  <strong onclick="event.stopPropagation();filterTomorrowSchedule();scrollToSection('ordersCard')" style="display:inline-block;min-width:70px;cursor:pointer;">
-    ${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalTomorrow()).length}
-  </strong>
+<div class="card schedule-summary-card" style="text-align:center;padding:8px 4px;">
+  <div class="schedule-summary-grid">
+    <div class="schedule-summary-item" onclick="filterTodaySchedule();scrollToSection('ordersCard')">
+      <div class="schedule-label">📅 Today</div>
+      <strong>${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalToday()).length}</strong>
+    </div>
+    <div class="schedule-summary-item" onclick="filterTomorrowSchedule();scrollToSection('ordersCard')">
+      <div class="schedule-label">Tomorrow</div>
+      <strong>${orders.filter(o=>o.status==='Pending' && o.scheduleDate===getLocalTomorrow()).length}</strong>
+    </div>
+  </div>
 </div>
 <div class="card" onclick="filterPendingOrders()">⏳Pending:<br><strong>${pending}</strong></div>   
     
@@ -3095,7 +3076,13 @@ const inactive = tankers.filter(t=>!t.active).length;
   `;
   filterTankers('active');
 }
-function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+function scrollToSection(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const topOffset = (window.innerWidth <= 768) ? 90 : 20;
+  const y = el.getBoundingClientRect().top + window.pageYOffset - topOffset;
+  window.scrollTo({top: Math.max(0,y), behavior:'smooth'});
+}
 function getLocalToday(){
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -3119,27 +3106,32 @@ function filterCompleteOrders(){
   scrollToSection('completedOrdersCard');
 }
 
-function filterTodayTomorrowSchedule(){
-  const today = getLocalToday();
-  const tomorrow = getLocalTomorrow();
-  showOrders();
-  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
-    const idx = Number(tr.dataset.index);
-    const o = orders[idx];
-    tr.style.display = (o && o.status==='Pending' && (o.scheduleDate===today || o.scheduleDate===tomorrow)) ? '' : 'none';
-  });
-  scrollToSection('ordersCard');
-}
-
 function filterTodaySchedule(){
   const today = getLocalToday();
   showOrders();
-  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
-    const idx = Number(tr.dataset.index);
-    const o = orders[idx];
-    tr.style.display = (o && o.status==='Pending' && o.scheduleDate===today) ? '' : 'none';
+
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
+      const idx = Number(tr.dataset.index);
+      const o = orders[idx];
+      tr.style.display = (o && o.status==='Pending' && o.scheduleDate===today) ? '' : 'none';
+    });
+    scrollToSection('ordersCard');
   });
-  scrollToSection('ordersCard');
+}
+
+function filterTomorrowSchedule(){
+  const tomorrow = getLocalTomorrow();
+  showOrders();
+
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
+      const idx = Number(tr.dataset.index);
+      const o = orders[idx];
+      tr.style.display = (o && o.status==='Pending' && o.scheduleDate===tomorrow) ? '' : 'none';
+    });
+    scrollToSection('ordersCard');
+  });
 }
 
 function filterTankers(status){
@@ -3465,6 +3457,8 @@ showToast("Logout Successful 👋");
 /* ================== AUTH STATE ================== */
 
 onAuthStateChanged(auth, async (user) => {
+  authInitialized = true;
+  document.body.classList.remove('auth-checking');
 
   const logoutBtn = document.getElementById("logoutBtn");
   const welcomeUser = document.getElementById("welcomeUser");
@@ -3626,15 +3620,3 @@ if ('serviceWorker' in navigator) {
 
 </body>
 </html>
-<script>
-function filterTomorrowSchedule(){
-  const tomorrow = getLocalTomorrow();
-  showOrders();
-  document.querySelectorAll('#orderTable tbody tr').forEach(tr=>{
-    const idx = Number(tr.dataset.index);
-    const o = orders[idx];
-    tr.style.display = (o && o.status==='Pending' && o.scheduleDate===tomorrow) ? '' : 'none';
-  });
-  scrollToSection('ordersCard');
-}
-</script>
